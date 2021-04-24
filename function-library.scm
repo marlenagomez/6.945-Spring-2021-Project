@@ -25,6 +25,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
     (set-path-value! fnc-library proc-path name) ; add proc to library
     (bind-proc name proc)))                      ; bind name to proc in the-environment
 
+(define (find-in-library proc)
+  (let ((proc-path (proc->path proc)))
+    (get-a-value fnc-library proc)))
+
 ; ... testing ....
 ; TODO
 
@@ -34,6 +38,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define the-env (the-environment))
 
+;;; Binds name to (list) proc, as an executable procedure 
 (define (bind-proc name proc)
   (environment-define the-env 
 		      name 
