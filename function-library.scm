@@ -16,20 +16,37 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define fnc-library (make-trie))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (add-to-library name proc)) ; TODO
+(define (add-to-library name proc)
+  (let ((proc-path (proc->path proc)))
+    (set-path-value! fnc-library proc-path name) ; add proc to library
+    (bind-proc name proc)))                      ; bind name to proc in the-environment
 
+; ... testing ....
+; TODO
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define the-env (the-environment))
 
 (define (bind-proc name proc)
-  (environment-define the-env name (lambda () (apply (car proc) (cdr proc)))))
+  (environment-define the-env 
+		      name 
+		      (lambda () (apply (eval (car proc) the-env) (cdr proc)))))
 
+; ... testing ...
 (bind-proc 'test-name '(+ 1 2 3))
+(test-name) ; -> 6
 
-(test-name)
+(bind-proc 'test-name2 '(lambda (x) (pp x)))
+(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
+
+; --------------------------------
 
 ;;; Converts a (list) proc to a path of predicates suitable for the library trie
 (define (proc->path proc)
@@ -54,5 +71,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (get-a-value fnc-library '(+ 1 2 3)) 
 ; -> name
 
+; --------------------------------
 
 
