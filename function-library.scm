@@ -12,6 +12,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (load "sdf/manager/load")             ; not sure if needed...
 (manage 'new 'generic-procedures)     ; loads common/trie.scm
                                       ; maybe: just (load "sdf/common") ?
+(manage 'add 'generic-interpreter)    ; for define-variable!
 
 (define fnc-library (make-trie))
 
@@ -19,7 +20,16 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define (add-to-library name proc)) ; TODO
 
-;;;; Internal (helper) procedures  
+;;;; Internal (helper) procedures
+
+(define the-env (the-environment))
+
+(define (bind-proc name proc)
+  (environment-define the-env name (lambda () (apply (car proc) (cdr proc)))))
+
+(bind-proc 'test-name '(+ 1 2 3))
+
+(test-name)
 
 ;;; Converts a (list) proc to a path of predicates suitable for the library trie
 (define (proc->path proc)
