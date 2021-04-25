@@ -8,17 +8,17 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ---------------------------------------------------------
 |#
 
-
+;;; Dependencies
 (load "sdf/manager/load")             ; not sure if needed...
 (manage 'new 'generic-procedures)     ; loads common/trie.scm
                                       ; maybe: just (load "sdf/common") ?
 (manage 'add 'generic-interpreter)    ; for define-variable!
 
-(define fnc-library (make-trie))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define fnc-library (make-trie))
 
 (define (add-to-library name proc)
   (let ((proc-path (proc->path proc)))
@@ -77,5 +77,23 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ; -> name
 
 ; --------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
