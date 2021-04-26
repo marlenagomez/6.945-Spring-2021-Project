@@ -9,10 +9,12 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-(load "sdf/manager/load")             ; not sure if needed...
-(manage 'new 'generic-procedures)     ; loads common/trie.scm
-                                      ; maybe: just (load "sdf/common") ?
-(manage 'add 'generic-interpreter)    ; for define-variable!
+;(load "sdf/manager/load")             ; not sure if needed...
+;(manage 'new 'generic-procedures)     ; loads common/trie.scm
+;(manage 'add 'generic-interpreter)    ; for define-variable!
+
+(load "sdf/common/trie.scm")
+(load "sdf/generic-interpreter/shared-rtdata.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -48,8 +50,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (bind-proc 'test-name '(+ 1 2 3))
 (test-name) ; -> 6
 
-(bind-proc 'test-name2 '(lambda (x) (pp x)))
-(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
+;(bind-proc 'test-name2 '(lambda (x) (pp x)))
+;(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
 
 ; --------------------------------
 
