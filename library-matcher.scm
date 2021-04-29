@@ -9,7 +9,16 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ---------------------------------------------------------
 |#
 
-(load "function-library")
+(load "function-library.scm")
+
+(define (chunkify scheme-code)
+  (define (find-chunks code)
+    (cond ((null? code) '())
+          ((list? (car code)) (append `(,(car code))
+                                      (find-chunks (car code))
+                                      (find-chunks (cdr code))))
+          (else (find-chunks (cdr code)))))
+  (find-chunks `(,scheme-code)))
 
 (define (match-to-library scheme-code)
   ;; recursively check 'chunks'
@@ -21,17 +30,16 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (check-all (chunkify scheme-code)))
 
 (match-to-library '(+ 1 2 3))
+; -> (+ 1 2 3)
+; -> trie-path
+; Unspecified return value
 
-(define (chunkify scheme-code)
-  (define (find-chunks code)
-    (cond ((null? code) '())
-	  ((list? (car code)) (append `(,(car code)) 
-				      (find-chunks (car code))
-				      (find-chunks (cdr code))))
-	  (else (find-chunks (cdr code)))))
-  (find-chunks `(,scheme-code)))
+(match-to-library '(let ((x (+ 1 2 3))) (pp x)))
+; -> (let ((x (+ 1 2 3)))
+; ->   (pp x))
+; -> Unable to match features: (let (...) (pp x))
 
-; ... testing ...
+; ... testing chunkify ...
 
 (chunkify '(+ 1 2 3))
 ; -> ((+ 1 2 3))

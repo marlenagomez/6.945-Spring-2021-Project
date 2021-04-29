@@ -9,12 +9,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-;(load "sdf/manager/load")             ; not sure if needed...
-;(manage 'new 'generic-procedures)     ; loads common/trie.scm
-;(manage 'add 'generic-interpreter)    ; for define-variable!
-
 (load "sdf/common/trie.scm")
-(load "sdf/generic-interpreter/shared-rtdata.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -25,7 +20,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (add-to-library name proc)
   (let ((proc-path (proc->path proc)))
     (set-path-value! fnc-library proc-path name) ; add proc to library
-    (bind-proc name proc)))                      ; bind name to proc in the-environment
+    (bind-proc name proc)))
 
 (define (find-in-library proc)
   (let ((proc-path (proc->path proc)))
@@ -50,7 +45,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (bind-proc 'test-name '(+ 1 2 3))
 (test-name) ; -> 6
 
-;(bind-proc 'test-name2 '(lambda (x) (pp x)))
+(bind-proc 'test-name2 '(define (x) (pp x)))
 ;(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
 
 ; --------------------------------
@@ -70,13 +65,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define proc->path:test (proc->path test-proc))
 
-(define name (intern-path-trie fnc-library proc->path:test))
+(define trie-path (intern-path-trie fnc-library proc->path:test))
 
-(set-path-value! fnc-library proc->path:test 'name)
+(set-path-value! fnc-library proc->path:test 'trie-path)
 
 ;;; demonstration: get-a-value given a (list) proc should return the (procedure) name
 (get-a-value fnc-library '(+ 1 2 3)) 
-; -> name
+; -> trie-path
 
 ; --------------------------------
 
