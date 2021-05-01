@@ -9,7 +9,14 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-(load "sdf/common/trie.scm")
+
+;;; sdf/efficient-generic/procedures/load-spec-trie
+(load "sdf/common/arith")
+(load "sdf/common/numeric-arith")
+(load "sdf/combining-arithmetics/standard-arith")
+(load "sdf/combining-arithmetics/function-variants")
+(load "sdf/generic-procedures/generic-arith")
+(load "sdf/common/trie")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -24,10 +31,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define (find-in-library proc)
   (let ((proc-path (proc->path proc)))
-    (get-a-value fnc-library proc)))
-
-; ... testing ....
-; TODO
+    (let ((result (ignore-errors 
+		   (lambda () (get-a-value fnc-library proc)))))
+      (if (symbol? result) `(,result) '()))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
@@ -39,16 +45,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (bind-proc name proc)
   (environment-define the-env 
 		      name 
-		      (lambda () (apply (eval (car proc) the-env) (cdr proc)))))
-
-; ... testing ...
-(bind-proc 'test-name '(+ 1 2 3))
-(test-name) ; -> 6
-
-(bind-proc 'test-name2 '(define (x) (pp x)))
-;(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
-
-; --------------------------------
+		      (lambda () (eval proc the-env))))
 
 ;;; Converts a (list) proc to a path of predicates suitable for the library trie
 (define (proc->path proc)
@@ -59,7 +56,28 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	(let ((elem-test (lambda (x) (eq? `,x first-elem))))
 	  (append `(,elem-test) (proc->path (cdr proc)))))))
 
-; ... testing ...
+; --------------------------------
+
+; ... testing library ...
+
+(add-to-library '123-test '(+ 1 2 3))
+(find-in-library '(+ 1 2 3))          ; -> |123-test|
+(find-in-library '(+ 1 2 4))          ; -> ()
+
+; ... testing bing-proc ...
+
+(bind-proc 'test-name '(+ 1 2 3))
+(test-name) ; -> 6
+
+(bind-proc 'test-lambda '(lambda (x) (+ x 2)))
+(test-lambda)     ; -> #[compound-procedure 19]
+((test-lambda) 1) ; -> 3
+
+;(bind-proc 'test-name2 '(define (x y) (pp y)))
+;(test-name2)          ; -> x
+;((test-name2) 'hello) ; -> The object x is not applicable. *TODO*
+
+; ... testing proc->path ...
 
 (define test-proc '(+ 1 2 3))
 
