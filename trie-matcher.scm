@@ -17,12 +17,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (manage 'add 'pattern-matching-on-graphs)
 
 (define (tmatch:extend-with-path-value value dictionary)
-  (match:extend-dict `,value '$value dictionary))
+  (pp (list "current dictionary" dictionary))
+  (pp (list "extending to include $value" value))
+  (match:extend-dict '(? $value) value dictionary)) ; reserving special keyword $value to point to a found path's value
 
 (define (tmatch:edge trie-edge)
   (let ((predicate (car trie-edge)))      ; assuming trie predicates return the edge value, for this to work
     (let ((edge-pattern (predicate 'throw-away)))
-      (pp (list "edge pattern:" edge-pattern))
       (cond ((match:var? edge-pattern)
 	     (case (match:var-type edge-pattern)
 	       ((?) (match:element edge-pattern))
@@ -32,7 +33,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define (tmatch:or trie)
   (lambda (object dict succeed)
-    (pp (list "trie" trie))
     (let loop ((edges (trie-edge-alist trie)))
       (if (pair? edges)
           (or ((tmatch:edge (car edges)) 
@@ -41,8 +41,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	       (lambda (dict1 n)
 		 (let ((next-trie (cdar edges)))
 		   (let ((path-value (trie-has-value? next-trie)))
-		     (pp (list "next-trie" next-trie))
-		     (pp (list "path value" path-value))
 		     (if path-value
 			 (succeed 
 			  (tmatch:extend-with-path-value path-value dict1)
@@ -61,7 +59,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	 (let lp ((data-list (car data))
 		  (curr-trie trie)
 		  (dictionary dictionary))
-	   (pp (list "tmatch:trie curr-trie" curr-trie))
 	   (if ((tmatch:or curr-trie)
 		data-list
 		dictionary
@@ -70,38 +67,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	       #f))))
   trie-match)
 
-#|
-	   (cond ((list? (trie-edge-alist trie))
-		  ((tmatch:or curr-trie)
-		   data-list
-		   dictionary
-		   (lambda (new-dictionary n)
-		     (if (> n (length data-list))
-			 (error "Matcher ate too much." n))
-		     (lp (list-tail data-list n)
-			 ;;; NEED METHOD OF GRABBING THE MATCHED NEXT TRIE
-			 new-dictionary))))
-		  ((pair? data-list) #f) ;unmatched data
-		  ((null? data-list)
-		   (succeed dictionary 1))
-		  (else #f)))))
-  trie-match)
-|#
-
+;;; unclear if needed...
 (define (t:matcher trie)
   (let ((match-procedure (tmatch:compile-trie trie)))
     (lambda (datum)
-      (run-t:matcher match-procedure
-		     datum
-		     match:bindings))))
-
-(define (run-t:matcher match-procedure datum succeed)
-  (match-procedure (list datum)
-                   (match:new-dict)
-                   (lambda (dict n)
-                     (and (= n 1)
-                          (succeed dict)))))
-
+      (run:matcher match-procedure
+		   datum
+		   match:bindings))))
 
 
 ; ---------- TESTING ----------
@@ -118,10 +90,45 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                                  (lambda (args) 'z))
                  'xuz-path)
 
-(run-t:matcher
+(run-matcher
  (tmatch:compile-trie test-trie)
  '(x y z)
  match:bindings)
- 
+; -> ("current dictionary" (dict))
+; -> ("extending to include $value" xyz-path)
+; -> Value: ()
 
+(run-matcher
+ (tmatch:compile-trie test-trie)
+ '(x 9 z)
+ match:bindings)
+; -> ("current dictionary" (dict (y 9 ?)))
+; -> ("extending to include $value" xuz-path)
+; -> Value: ()
+
+(run-matcher
+ (tmatch:compile-trie test-trie)
+ '(x 3 c)
+ match:bindings)
+; -> Value: #f
+
+(set-path-value! test-trie (list (lambda (args) 'a)
+                                 (lambda (args) `(? y ,symbol?))
+                                 (lambda (args) 'b)
+				 (lambda (args) `(? y  ,symbol?)))
+                 'multi-y-path)
+
+(run-matcher
+ (tmatch:compile-trie test-trie)
+ '(a x b x)
+ match:bindings)
+; -> ("current dictionary" (dict (y x ?)))
+; -> ("extending to include $value" multi-y-path)
+; -> Value: ()
+
+(run-matcher
+ (tmatch:compile-trie test-trie)
+ '(a x b y)
+ match:bindings)
+; -> Value: #f
 
