@@ -25,22 +25,30 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;; --- TRIE MATCHER ---
 
+(define tmatch:path-value-keyword '$value)
+
 (define (tmatch:extend-with-path-value value dictionary)
   (match:extend-dict '(? $value) value dictionary)) ; reserving special keyword $value to point to a found path's value
+
+(define (tmatch:trie? pattern) (trie? pattern))
 
 (define (tmatch:edge trie-edge)
   (let ((predicate (car trie-edge)))      ; assuming trie predicates return the edge value, for this to work
     (let ((edge-pattern (predicate 'throw-away)))
+      (pp (list "tmatch:edge" edge-pattern))
       (cond ((match:var? edge-pattern)
 	     (case (match:var-type edge-pattern)
 	       ((?) (match:element edge-pattern))
 	       (else (error "Unknown var type:" edge-pattern))))
+	    ((tmatch:trie? edge-pattern)
+	     (tmatch:trie edge-pattern))
 	    (else
 	     (match:eqv edge-pattern))))))
 
 (define (tmatch:or trie)
   (lambda (object dict succeed)
     (let loop ((edges (trie-edge-alist trie)))
+      (pp (list "trying to match" object))
       (if (pair? edges)
           (or ((tmatch:edge (car edges)) 
 	       object 

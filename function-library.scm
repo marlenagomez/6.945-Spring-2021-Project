@@ -9,22 +9,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-
-;;; trie matcher
+(load "library-utils")
 (load "trie-matcher")
-
-;;; sdf/efficient-generic/procedures/load-spec-trie
-;(load "sdf/common/arith")
-;(load "sdf/common/numeric-arith")
-;(load "sdf/combining-arithmetics/standard-arith")
-;(load "sdf/combining-arithmetics/function-variants")
-;(load "sdf/generic-procedures/generic-arith")
-;(load "sdf/common/trie")
-
-;;; other
-;(load "sdf/common/match-utils")
-;(load "sdf/unification/unify")
-;(load "sdf/unification/type-resolver")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -37,6 +23,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (add-to-library name proc)
   (let ((proc-path (proc->path proc)))
     (set-path-value! fnc-library proc-path name) ; add proc to library
+    (add-parameter-list! name (gather-parameters proc))
     (bind-proc name proc)))
 
 (define (find-in-library proc)
@@ -49,71 +36,58 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ; --- alt. library functionality that uses the tmatcher ---
 
 (define (add-to-library name proc)
-  (define (tmatcher-proc->path proc)
-    (map (lambda (elem) (lambda (args) elem)) proc))
-  (set-path-value! fnc-library (tmatcher-proc->path proc) name)
+  (set-path-value! fnc-library (tmatcher:proc->path proc) name)
+  (add-parameter-list! name (gather-parameters proc))
   (bind-proc name proc))
 
 (define (find-in-library proc)
+  (pp (list "looking for" proc "in library"))
   (let ((match-dict ((t:matcher fnc-library) proc)))
     (pp (list "returned match-dict" match-dict))
     (if (not (cdr match-dict))
 	'()
-	(let ((lookup (match:lookup '$value match-dict)))
-	  (if (not lookup) 
-	      '() 
-	      `(,(match:binding-value lookup)))))))
+	(let ((value (safe-match-value-lookup tmatch:path-value-keyword 
+					      match-dict)))
+	  (if (not value) 
+	      '()
+	      (let ((matched-params (map-parameters (get-parameters value) match-dict)))
+		(pp (list "matched params" matched-params))
+		`((,value ,@matched-params))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define the-env (the-environment))
-
-;;; Binds name to proc, as an executable procedure 
-(define (bind-proc name proc)
-  (environment-define the-env 
-		      name 
-		      (eval (proc->executable proc) the-env)))
+(define parameter-table (make-alist-store eq?))
+(define (add-parameter-list! name params) ((parameter-table 'put!) name params))
+(define (get-parameters name) ((parameter-table 'get) name))
+(define (has-parameters? name)((parameter-table 'has?) name))
 
 ;;; Converts a proc to a path of predicates suitable for the library trie
-(define (proc->path proc)
-  (map (lambda (elem) (get-predicate elem eq?)) proc))
+(define (proc->path proc) 
+  (apply append
+	 (map (lambda (elem)
+		(if (and (list? elem) (not (is-parameter? elem)))
+		    (proc->path elem)
+		    `(,(get-predicate elem eq?))))
+	      proc)))
 
-(define (proc->executable proc)
-  `(lambda ,(gather-parameters proc) ,(regularize proc)))
+;(define (tmatcher:proc->path proc)
+;  (apply append
+;	 (map (lambda (elem)
+;		(if (and (list? elem) (not (is-parameter? elem)))
+;		    (tmatcher:proc->path elem)
+;		    `(,(lambda (args) elem))))
+;	      proc)))
 
-(define (gather-parameters proc)
-  (map param-name (filter is-parameter? proc)))
-
-(define (regularize proc)
-  (map (lambda (elem) (if (is-parameter? elem) (param-name elem) elem))
+(define (tmatcher:proc->path proc)
+  (map (lambda (elem)
+	 (if (and (list? elem) (not (is-parameter? elem)))
+	     (let ((inner-trie (make-trie)))
+	       (intern-path-trie inner-trie (tmatcher:proc->path elem))
+	       (lambda (args) inner-trie))
+	     (lambda (args) elem)))
        proc))
-
-(define (is-parameter? elem)
-  (and (list? elem)
-       (eq? '? (car elem))))
-
-(define (param-name parameter)
-  (guarantee is-parameter? parameter)
-  (cadr parameter))
-
-(define (param-predicate parameter)
-  (guarantee is-parameter? parameter)
-  (caddr parameter))
- 
-(define (get-predicate proc-elem eq=?)
-  (if (is-parameter? proc-elem) 
-      (param-predicate proc-elem)
-      (lambda (x) (eq=? `,x proc-elem))))
-
-#|
-(proc->path '(+ 1 2 3))
-(proc->executable '(+ 1 2 3))                 ; -> (lambda () (+ 1 2 3))
-(proc->path `(modulo (? x ,symbol?) 3))
-(proc->executable `(modulo (? x ,symbol?) 3)) ; -> (lambda (x) (modulo x 3))
-|#
-
 
 #|
 ;;; TODO extension: infer the parameters?
