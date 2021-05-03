@@ -13,12 +13,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (load "sdf/manager/load")
 (manage 'new 'term)
 (manage 'add 'design)
-(manage 'add 'unification)
-(manage 'add 'pattern-matching-on-graphs)
+;(manage 'add 'unification)
+;(manage 'add 'pattern-matching-on-graphs)
 
 (define (tmatch:extend-with-path-value value dictionary)
-  (pp (list "current dictionary" dictionary))
-  (pp (list "extending to include $value" value))
   (match:extend-dict '(? $value) value dictionary)) ; reserving special keyword $value to point to a found path's value
 
 (define (tmatch:edge trie-edge)
@@ -55,29 +53,26 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define (tmatch:trie trie)
   (define (trie-match data dictionary succeed)
-    (and (pair? data)
-	 (let lp ((data-list (car data))
-		  (curr-trie trie)
-		  (dictionary dictionary))
-	   (if ((tmatch:or curr-trie)
-		data-list
-		dictionary
-		succeed)
-	       (succeed dictionary 1)
-	       #f))))
+    (if (pair? data)
+	((tmatch:or trie)
+	 (car data)
+	 dictionary
+	 (lambda (final-dictionary n)
+	   (succeed final-dictionary 1)))
+	#f))
   trie-match)
 
-;;; unclear if needed...
+;;; Trie Matcher User Interface
 (define (t:matcher trie)
   (let ((match-procedure (tmatch:compile-trie trie)))
     (lambda (datum)
-      (run:matcher match-procedure
+      (run-matcher match-procedure
 		   datum
 		   match:bindings))))
 
 
 ; ---------- TESTING ----------
-
+#|
 (define test-trie (make-trie))
 
 (set-path-value! test-trie (list (lambda (args) 'x)
@@ -90,45 +85,25 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                                  (lambda (args) 'z))
                  'xuz-path)
 
-(run-matcher
- (tmatch:compile-trie test-trie)
- '(x y z)
- match:bindings)
-; -> ("current dictionary" (dict))
-; -> ("extending to include $value" xyz-path)
-; -> Value: ()
+((t:matcher test-trie) '(x y z))
+; -> (($value xyz-path ?)) 
 
-(run-matcher
- (tmatch:compile-trie test-trie)
- '(x 9 z)
- match:bindings)
-; -> ("current dictionary" (dict (y 9 ?)))
-; -> ("extending to include $value" xuz-path)
-; -> Value: ()
+((t:matcher test-trie) '(x 9 z))
+; -> (($value xuz-path ?) (y 9 ?))
 
-(run-matcher
- (tmatch:compile-trie test-trie)
- '(x 3 c)
- match:bindings)
+((t:matcher test-trie) '(x 3 c))
 ; -> Value: #f
 
 (set-path-value! test-trie (list (lambda (args) 'a)
                                  (lambda (args) `(? y ,symbol?))
                                  (lambda (args) 'b)
-				 (lambda (args) `(? y  ,symbol?)))
+				 (lambda (args) `(? y ,symbol?)))
                  'multi-y-path)
 
-(run-matcher
- (tmatch:compile-trie test-trie)
- '(a x b x)
- match:bindings)
-; -> ("current dictionary" (dict (y x ?)))
-; -> ("extending to include $value" multi-y-path)
-; -> Value: ()
+((t:matcher test-trie) '(a x b x))
+; -> (($value multi-y-path ?) (y x ?))
 
-(run-matcher
- (tmatch:compile-trie test-trie)
- '(a x b y)
- match:bindings)
+((t:matcher test-trie) '(a x b y))
 ; -> Value: #f
 
+|#

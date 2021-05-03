@@ -9,7 +9,34 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ---------------------------------------------------------
 |#
 
+;;; Dependencies
 (load "function-library")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (match-in-library scheme-code)
+  ;; recursively check 'chunks'
+  (define (check-all chunks)
+    (if (null? chunks)
+	'()
+	(append (find-in-library (car chunks))
+		(check-all (cdr chunks)))))
+  (check-all (chunkify scheme-code)))
+
+(add-to-library '1+2+3 '(+ 1 2 3))
+
+(match-to-library '(+ 1 2 3))
+; -> (|1+2+3|)
+
+(match-to-library '(let ((x (+ 1 2 3))) (pp x)))
+; -> (|1+2+3|)
+
+(1+2+3) 
+; -> 6
+
+
+
 
 (define (chunkify scheme-code)
   (define (find-chunks code)
@@ -20,23 +47,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
           (else (find-chunks (cdr code)))))
   (find-chunks `(,scheme-code)))
 
-(define (match-to-library scheme-code)
-  ;; recursively check 'chunks'
-  (define (check-all chunks)
-    (if (null? chunks)
-	'()
-	(append (find-in-library (car chunks))
-		(check-all (cdr chunks)))))
-  (check-all (chunkify scheme-code)))
-
-(match-to-library '(+ 1 2 3))
-; -> (trie-path)
-
-(match-to-library '(let ((x (+ 1 2 3))) (pp x)))
-; -> (trie-path)
-
-
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ; ... testing chunkify ...
