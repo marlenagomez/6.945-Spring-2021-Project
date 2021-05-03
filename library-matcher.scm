@@ -24,18 +24,25 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		(check-all (cdr chunks)))))
   (check-all (chunkify scheme-code)))
 
+; ... testing ...
+
 (add-to-library '1+2+3 '(+ 1 2 3))
 
-(match-to-library '(+ 1 2 3))
+(match-in-library '(+ 1 2 3))
 ; -> (|1+2+3|)
 
-(match-to-library '(let ((x (+ 1 2 3))) (pp x)))
+(match-in-library '(let ((x (+ 1 2 3))) (pp x)))
 ; -> (|1+2+3|)
 
 (1+2+3) 
 ; -> 6
 
+(add-to-library 'mod10 `(modulo (? x ,symbol?) 10))
 
+(match-in-library '(define (x y z)
+		     (+ (modulo x 10) (modulo y 10) (modulo z 10))))
+
+; ... testinng ...
 
 
 (define (chunkify scheme-code)

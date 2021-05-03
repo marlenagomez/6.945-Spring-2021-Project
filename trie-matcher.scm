@@ -10,11 +10,20 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;;; Expanded from SDF's pattern and graph matchers
 
-(load "sdf/manager/load")
-(manage 'new 'term)
-(manage 'add 'design)
-;(manage 'add 'unification)
-;(manage 'add 'pattern-matching-on-graphs)
+;;; dependencies
+
+(load "sdf/common/overrides")
+(load "sdf/common/collections")
+(load "sdf/common/predicates")
+(load "sdf/common/generic-procedures")
+(load "sdf/common/applicability")
+(load "sdf/common/match-utils")
+(load "sdf/design-of-the-matcher/matcher")
+
+(load "sdf/common/trie")
+(load "sdf/common/predicate-counter")
+
+;;; --- TRIE MATCHER ---
 
 (define (tmatch:extend-with-path-value value dictionary)
   (match:extend-dict '(? $value) value dictionary)) ; reserving special keyword $value to point to a found path's value
@@ -66,9 +75,11 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (t:matcher trie)
   (let ((match-procedure (tmatch:compile-trie trie)))
     (lambda (datum)
-      (run-matcher match-procedure
-		   datum
-		   match:bindings))))
+      (match:new-bindings 
+       (match:new-dict)
+       (run-matcher match-procedure
+		    datum
+		    match:bindings)))))
 
 
 ; ---------- TESTING ----------
@@ -86,13 +97,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                  'xuz-path)
 
 ((t:matcher test-trie) '(x y z))
-; -> (($value xyz-path ?)) 
+; -> (dict ($value xyz-path ?)) 
 
 ((t:matcher test-trie) '(x 9 z))
-; -> (($value xuz-path ?) (y 9 ?))
+; -> (dict ($value xuz-path ?) (y 9 ?))
 
 ((t:matcher test-trie) '(x 3 c))
-; -> Value: #f
+; -> Value: (dict . #f)
 
 (set-path-value! test-trie (list (lambda (args) 'a)
                                  (lambda (args) `(? y ,symbol?))
@@ -101,9 +112,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                  'multi-y-path)
 
 ((t:matcher test-trie) '(a x b x))
-; -> (($value multi-y-path ?) (y x ?))
+; -> (dict ($value multi-y-path ?) (y x ?))
 
 ((t:matcher test-trie) '(a x b y))
-; -> Value: #f
+; -> Value: (dict . #f)
 
 |#

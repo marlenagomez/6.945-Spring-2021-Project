@@ -14,33 +14,17 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (load "trie-matcher")
 
 ;;; sdf/efficient-generic/procedures/load-spec-trie
-(load "sdf/common/arith")
-(load "sdf/common/numeric-arith")
-(load "sdf/combining-arithmetics/standard-arith")
-(load "sdf/combining-arithmetics/function-variants")
-(load "sdf/generic-procedures/generic-arith")
-(load "sdf/common/trie")
+;(load "sdf/common/arith")
+;(load "sdf/common/numeric-arith")
+;(load "sdf/combining-arithmetics/standard-arith")
+;(load "sdf/combining-arithmetics/function-variants")
+;(load "sdf/generic-procedures/generic-arith")
+;(load "sdf/common/trie")
 
 ;;; other
-(load "sdf/common/match-utils")
-(load "sdf/unification/unify")
-(load "sdf/unification/type-resolver")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-;;;; Appropriate arithmetic required
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-
-; perhaps unneeded...
-
-(define full-generic-arithmetic
-  (let ((g (make-generic-arithmetic make-simple-dispatch-store)))
-    (add-to-generic-arithmetic! g numeric-arithmetic)
-    (extend-generic-arithmetic! g function-extender)
-    (add-to-generic-arithmetic! g
-				(symbolic-extender numeric-arithmetic))
-    g))
-
-(install-arithmetic! full-generic-arithmetic)
+;(load "sdf/common/match-utils")
+;(load "sdf/unification/unify")
+;(load "sdf/unification/type-resolver")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -67,14 +51,19 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (add-to-library name proc)
   (define (tmatcher-proc->path proc)
     (map (lambda (elem) (lambda (args) elem)) proc))
-  (set-path-value! fnc-library (tmatcher-proc->path) name)
+  (set-path-value! fnc-library (tmatcher-proc->path proc) name)
   (bind-proc name proc))
 
-(define (match-in-library proc)
+(define (find-in-library proc)
   (let ((match-dict ((t:matcher fnc-library) proc)))
     (pp (list "returned match-dict" match-dict))
-    ((match-dict 'get) '$value)))
-  
+    (if (not (cdr match-dict))
+	'()
+	(let ((lookup (match:lookup '$value match-dict)))
+	  (if (not lookup) 
+	      '() 
+	      `(,(match:binding-value lookup)))))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
