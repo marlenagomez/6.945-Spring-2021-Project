@@ -9,29 +9,55 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ---------------------------------------------------------
 |#
 
+;;; Dependencies
 (load "function-library")
 
-(define (match-to-library scheme-code)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (match-in-library scheme-code)
   ;; recursively check 'chunks'
   (define (check-all chunks)
-    (if (not (null? chunks))
-	(begin (pp (car chunks))
-	       (pp (find-in-library (car chunks)))
-	       (check-all (cdr chunks)))))
+    (if (null? chunks)
+	'()
+	(append (find-in-library (car chunks))
+		(check-all (cdr chunks)))))
   (check-all (chunkify scheme-code)))
 
-(match-to-library '(+ 1 2 3))
+; ... testing ...
+
+(add-to-library '1+2+3 '(+ 1 2 3))
+
+(match-in-library '(+ 1 2 3))
+; -> (|1+2+3|)
+
+(match-in-library '(let ((x (+ 1 2 3))) (pp x)))
+; -> (|1+2+3|)
+
+(1+2+3) 
+; -> 6
+
+(add-to-library 'mod10 `(modulo (? x ,symbol?) 10))
+
+(match-in-library '(define (x y z)
+		     (+ (modulo x 10) (modulo y 10) (modulo z 10))))
+
+; ... testinng ...
+
 
 (define (chunkify scheme-code)
   (define (find-chunks code)
     (cond ((null? code) '())
-	  ((list? (car code)) (append `(,(car code)) 
-				      (find-chunks (car code))
-				      (find-chunks (cdr code))))
-	  (else (find-chunks (cdr code)))))
+          ((list? (car code)) (append `(,(car code))
+                                      (find-chunks (car code))
+                                      (find-chunks (cdr code))))
+          (else (find-chunks (cdr code)))))
   (find-chunks `(,scheme-code)))
 
-; ... testing ...
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+; ... testing chunkify ...
 
 (chunkify '(+ 1 2 3))
 ; -> ((+ 1 2 3))
