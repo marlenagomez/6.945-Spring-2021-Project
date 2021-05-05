@@ -18,32 +18,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define fnc-library (make-trie))
 
-; --- may be depreciated (first pass with predicates) ---
-#|
-(define (add-to-library name proc)
-  (let ((proc-path (proc->path proc)))
-    (set-path-value! fnc-library proc-path name) ; add proc to library
-    (add-parameter-list! name (gather-parameters proc))
-    (bind-proc name proc)))
-
-(define (find-in-library proc)
-  (let ((proc-path (proc->path proc)))
-    (let ((result (ignore-errors 
-		   (lambda () (get-a-value fnc-library proc)))))
-      (if (symbol? result) `(,result) '()))))
-|#
-
-; --- alt. library functionality that uses the tmatcher ---
-
 (define (add-to-library name proc)
   (set-path-value! fnc-library (tmatcher:proc->path proc) name)
   (add-parameter-list! name (gather-parameters proc))
   (bind-proc name proc))
 
 (define (find-in-library proc)
-  (pp (list "looking for" proc "in library"))
   (let ((match-dict ((t:matcher fnc-library) proc)))
-    (pp (list "returned match-dict" match-dict))
     (if (not (cdr match-dict))
 	'()
 	(let ((value (safe-match-value-lookup tmatch:path-value-keyword 
@@ -51,7 +32,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	  (if (not value) 
 	      '()
 	      (let ((matched-params (map-parameters (get-parameters value) match-dict)))
-		(pp (list "matched params" matched-params))
 		`((,value ,@matched-params))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -64,22 +44,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (has-parameters? name)((parameter-table 'has?) name))
 
 ;;; Converts a proc to a path of predicates suitable for the library trie
-(define (proc->path proc) 
-  (apply append
-	 (map (lambda (elem)
-		(if (and (list? elem) (not (is-parameter? elem)))
-		    (proc->path elem)
-		    `(,(get-predicate elem eq?))))
-	      proc)))
-
-;(define (tmatcher:proc->path proc)
-;  (apply append
-;	 (map (lambda (elem)
-;		(if (and (list? elem) (not (is-parameter? elem)))
-;		    (tmatcher:proc->path elem)
-;		    `(,(lambda (args) elem))))
-;	      proc)))
-
 (define (tmatcher:proc->path proc)
   (map (lambda (elem)
 	 (if (and (list? elem) (not (is-parameter? elem)))
