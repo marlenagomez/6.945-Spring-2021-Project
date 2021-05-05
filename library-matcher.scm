@@ -10,40 +10,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-(load "function-library")
+(load "function-library")      ; trie matching implementation
+;(load "basic-function-library") ; basic matching implementation
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(define (match-in-library scheme-code)
-  ;; recursively check 'chunks'
-  (define (check-all chunks)
-    (if (null? chunks)
-	'()
-	(append (find-in-library (car chunks))
-		(check-all (cdr chunks)))))
-  (check-all (chunkify scheme-code)))
-
-; ... testing ...
-
-(add-to-library '1+2+3 '(+ 1 2 3))
-
-(match-in-library '(+ 1 2 3))
-; -> (|1+2+3|)
-
-(match-in-library '(let ((x (+ 1 2 3))) (pp x)))
-; -> (|1+2+3|)
-
-(1+2+3) 
-; -> 6
-
-(add-to-library 'mod10 `(modulo (? x ,symbol?) 10))
-
-(match-in-library '(define (x y z)
-		     (+ (modulo x 10) (modulo y 10) (modulo z 10))))
-
-; ... testinng ...
-
 
 (define (chunkify scheme-code)
   (define (find-chunks code)
@@ -54,9 +24,49 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
           (else (find-chunks (cdr code)))))
   (find-chunks `(,scheme-code)))
 
+(define (match-in-library scheme-code)
+  ;; recursively check 'chunks'
+  (define (check-all chunks)
+    (if (null? chunks)
+	'()
+	(let ((search-result (find-in-library (car chunks))))
+	  (if (null? search-result)
+	      (check-all (cdr chunks))
+	      (append `(,(cons (car chunks) search-result))
+		      (check-all (cdr chunks)))))))
+  (check-all (chunkify scheme-code)))
+
+; ... testing ...
+
+(add-to-library '1+2+3 '(+ 1 2 3))
+(match-in-library '(+ 1 2 3))                     ; -> (((+ 1 2 3) (|1+2+3|)))
+(match-in-library '(let ((x (+ 1 2 3))) (pp x)))  ; -> (((+ 1 2 3) (|1+2+3|)))
+
+(1+2+3) ; -> 6
+
+(add-to-library 'mod10 `(modulo (? x ,symbol?) 10))
+(match-in-library '(define (x y z)
+		     (+ (modulo x 10) (modulo y 10) (modulo z 10))))
+; -> (((modulo x 10) (mod10 x)) ((modulo y 10) (mod10 y)) ((modulo z 10) (mod10 z)))
+
+(mod10 2) ; ->  2
+
+(add-to-library 'add-constant-map `(map (lambda (l) (+ l (? x ,number?))) (? y ,list?)))
+(match-in-library '(define (a b c d e f)
+		     (append (map (lambda (l) (+ l 4)) (a b))
+			     (map (lambda (l) (+ l 5)) (c d))
+			     (map (lambda (l) (+ l 6)) (e f)))))
+#|
+(((map (lambda (l) (+ l 4)) (a b)) (add-constant-map 4 (a b))) 
+ ((map (lambda (l) (+ l 5)) (c d)) (add-constant-map 5 (c d))) 
+ ((map (lambda (l) (+ l 6)) (e f)) (add-constant-map 6 (e f))))
+|#
+
+(add-constant-map 3 '(1 2 3)) ; -> (4 5 6)  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
+#|
 ; ... testing chunkify ...
 
 (chunkify '(+ 1 2 3))
@@ -154,4 +164,4 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
  (unquote scheme-code)
  )
 |#
-
+|#

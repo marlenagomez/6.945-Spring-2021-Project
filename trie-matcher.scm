@@ -25,45 +25,64 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;; --- TRIE MATCHER ---
 
+(define tmatch:path-value-keyword '$value)
+
 (define (tmatch:extend-with-path-value value dictionary)
   (match:extend-dict '(? $value) value dictionary)) ; reserving special keyword $value to point to a found path's value
 
-(define (tmatch:edge trie-edge)
-  (let ((predicate (car trie-edge)))      ; assuming trie predicates return the edge value, for this to work
-    (let ((edge-pattern (predicate 'throw-away)))
-      (cond ((match:var? edge-pattern)
-	     (case (match:var-type edge-pattern)
-	       ((?) (match:element edge-pattern))
-	       (else (error "Unknown var type:" edge-pattern))))
-	    (else
-	     (match:eqv edge-pattern))))))
+(define (tmatch:trie? pattern) (trie? pattern))
 
-(define (tmatch:or trie)
+(define (tmatch:edge edge-pattern)
+  (cond ((match:var? edge-pattern)
+	 (case (match:var-type edge-pattern)
+	   ((?) (match:element edge-pattern))
+	   (else (error "Unknown var type:" edge-pattern))))
+	((tmatch:trie? edge-pattern)
+	 (tmatch:trie edge-pattern #f))
+	(else
+	 (match:eqv edge-pattern))))
+
+(define (tmatch:extract-pattern trie-edge)
+  (let ((predicate (car trie-edge)))      
+    (predicate 'throw-away)))        ; assuming trie predicates return the edge value, for this to work
+
+(define (children trie) (trie-edge-alist trie))
+
+(define (tmatch:or trie must-end-in-path-value)
   (lambda (object dict succeed)
-    (let loop ((edges (trie-edge-alist trie)))
+    (let loop ((edges (children trie)))
       (if (pair? edges)
-          (or ((tmatch:edge (car edges)) 
-	       object 
-	       dict 
-	       (lambda (dict1 n)
-		 (let ((next-trie (cdar edges)))
-		   (let ((path-value (trie-has-value? next-trie)))
-		     (if path-value
-			 (succeed 
-			  (tmatch:extend-with-path-value path-value dict1)
-			  1)
-			 ((tmatch:or (cdar edges)) 
-			  (list-tail object n) dict1 succeed))))))
-              (loop (cdr edges)))
-          #f))))
+	  (let ((pattern (tmatch:extract-pattern (car edges))))
+	    (or ((tmatch:edge pattern) 
+		 object 
+		 dict 
+		 (lambda (dict1 n)
+		   (let ((next-trie (cdar edges)))
+		     (let ((path-value (trie-has-value? next-trie)))
+		       ;; here, we have matched an edge and must consider
+		       ;; 3 options: either we are at a leaf with a path
+		       ;; value, a leaf with no path value of an anonymous trie, 
+		       ;; or we are not yet at a leaf
+		       (cond ((and must-end-in-path-value path-value)               ; condition 1: we are done matching
+			      (succeed 
+			       (tmatch:extend-with-path-value path-value dict1)
+			       1))
+			     ((and (not must-end-in-path-value) 
+				   (not path-value)
+				   (= 0 (length (children next-trie))))             ; condition 2: continue matching tries
+			      (succeed dict1 1))                                
+			     (else ((tmatch:or (cdar edges) must-end-in-path-value) ; condition 3: continue to the next node 
+				    (list-tail object n) dict1 succeed)))))))
+		(loop (cdr edges))))
+	  #f))))
 
 (define (tmatch:compile-trie trie)
-  (tmatch:trie trie))
+  (tmatch:trie trie #t))
 
-(define (tmatch:trie trie)
+(define (tmatch:trie trie anonymous?)
   (define (trie-match data dictionary succeed)
     (if (pair? data)
-	((tmatch:or trie)
+	((tmatch:or trie anonymous?)
 	 (car data)
 	 dictionary
 	 (lambda (final-dictionary n)
