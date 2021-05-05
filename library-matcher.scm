@@ -10,8 +10,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-;(load "function-library")      ; trie matching implementation
-(load "basic-function-library") ; basic matching implementation
+(load "function-library")      ; trie matching implementation
+;(load "basic-function-library") ; basic matching implementation
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
