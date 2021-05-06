@@ -249,11 +249,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
       (/ (+ expr-4 expr-5 (- x y) expr-4) expr-5))))
 
 (find-in-library '(- y z))
-("returned match-dict" (dict ($value expr-5 ?)))
 ;Value: (#[uninterned-symbol 14 expr-5])
 
 (find-in-library '(* x 3))
-("returned match-dict" (dict ($value expr-4 ?)))
 ;Value: (#[uninterned-symbol 15 expr-4])
 
 (pp (gjs/cselim
@@ -266,11 +264,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
     (+ expr-10 (- x y) expr-10)))
 
 (find-in-library '(* x 3))
-("returned match-dict" (dict ($value expr-10 ?)))
 ;Value: (#[uninterned-symbol 16 expr-10])
 
 
-;;; this test case nor working because fringe-smaller-than?
+;;; this test case nor working because fringe-smaller-than? not included
 (pp
  (gjs/cselim
   '(up
