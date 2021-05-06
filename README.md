@@ -30,6 +30,9 @@ Implements the library as an association list (alist) mapping expanded functions
 #### function-library.scm
 In order to optimize the search for a matching procedure, an alternative implementation of the library isas a trie. The edges of the trie are predicates that test for matching the elements that make up procedures.
 
+#### trie-matcher.scm
+A custom trie matcher compiler, for use in matching to the library when implemented as a trie.
+
 ### Program-Library Matching
 
 #### library-matcher.scm
