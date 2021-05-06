@@ -133,7 +133,12 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;  (pp (> (length bindings) 0))
 
   (if (> (length bindings) 0) ; add repeated expression to library
-      (add-to-library (car (car bindings)) (car (cdr (car bindings))))
+      (begin (pp (car bindings))
+	     (pp (cadar bindings))
+	     (pp (caar bindings))
+	     (pp (list? (cadar bindings)))
+	     (add-to-library (intern (symbol->string (caar bindings))) 
+			     (cadar bindings)))
   )
 
   (if (null? bindings)
@@ -232,9 +237,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;; test expr-1 added to library
 (find-in-library '(* x 3))
-("returned match-dict" (dict ($value expr-1 ?)))
-;Value: (#[uninterned-symbol 13 expr-1])
-
+; -> ((expr-10))
+(pp expr-10)
+; -> (lambda () (* x 3))
 
 (pp (gjs/cselim
      '(lambda (x)
