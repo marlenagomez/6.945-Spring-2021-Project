@@ -38,6 +38,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ; ... testing ...
 
+(add-to-library 'expr-10 '(* x 3))
+(match-in-library '(* x 3))       ; -> (((* x 3) (expr-10)))
+(pp expr-10)                      ; -> (lambda () (* x 3))
+
 (add-to-library '1+2+3 '(+ 1 2 3))
 (match-in-library '(+ 1 2 3))                     ; -> (((+ 1 2 3) (|1+2+3|)))
 (match-in-library '(let ((x (+ 1 2 3))) (pp x)))  ; -> (((+ 1 2 3) (|1+2+3|)))
