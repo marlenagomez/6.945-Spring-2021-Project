@@ -1,6 +1,5 @@
 #|
 Common Subexpression Eliminator
-from scmutils/src/general/gjs-cse.scm
 
 ---------------------------------------------------------
 Project: 6.945 | Program Refactoring
@@ -95,9 +94,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                             (make-let-expression (cadr expression)
                                                  (make-canonical-lets let-variables
                                                                       let-body))))
-                      (record-expression! expression-recorder
-                                          canonical-expression
-                                          new-bound-variables))))
+
+    ;                  (pp "here")
+                      (if (> (length let-variables) 0)
+                        (pp "Common subexpression(s) found! add-to-library?")))))
+                      ;(record-expression! expression-recorder
+                      ;                    canonical-expression
+                      ;                    new-bound-variables))))
 
                (else
                 (let ((canonical-expression
@@ -115,7 +118,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
            (let-body
             (variable->expression initial-expression-recorder
                                   canonical-expression)))
-      (make-canonical-lets let-variables let-body))))
+      (if (> (length let-variables) 0)
+        (pp "Common subexpression(s) found! add-to-library?")))))))
+      ;(make-canonical-lets let-variables let-body))))
 
 
 
@@ -132,10 +137,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;  (pp bindings)
 ;  (pp (> (length bindings) 0))
 
-  (if (> (length bindings) 0) ; add repeated expression to library
-      (add-to-library (intern (symbol->string (caar bindings))) 
-		      (cadar bindings))
-  )
+;  (if (> (length bindings) 0) ; add repeated expression to library
+;      (add-to-library (intern (symbol->string (caar bindings)))
+;		      (cadar bindings))
+;  )
 
   (if (null? bindings)
       body
@@ -209,6 +214,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   ((expression-recorder 'record!) expression ignored-variables))
 
 (define (expressions-seen expression-recorder)
+  (if (> (length (expression-recorder 'seen)) 0)
+      (pp (cadar (expression-recorder 'seen))))
   (expression-recorder 'seen))
 
 (define (variable->expression expression-recorder variable)
@@ -225,63 +232,64 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
            (eq? variables expression)))))
 
 #|
+
+;;; testing ...
+
 (pp (gjs/cselim '(+ (* x 3) (- x y) (* x 3))))
 
-; Value:
-(let ((expr-1 (* x 3)))
-  (+ expr-1 (- x y) expr-1))
+#|
+; Value ->
+(* x 3)
+"Common subexpression(s) found! add-to-library?"
+#!unspecific
+;Unspecified return value
+|#
 
-;; test expr-1 added to library
-(find-in-library '(* x 3))
-; -> ((expr-13))
-(pp expr-13)
-; -> (lambda () (* x 3))
+
+;;; user inputs name for common subexpression to add to library
+(add-to-library '3x '(* x 3)) ; -> Value: |3x|
+
+;; test added to library
+(find-in-library '(* x 3)) ; -> ((|3x|))
+(pp |3x|) ; -> (lambda () (* x 3))
+
 
 (pp (gjs/cselim
      '(lambda (x)
         (/ (+ (* x 3) (- y z) (- x y) (* x 3))
            (- y z)))))
 
-; Value:
-(let ((expr-5 (- y z)))
-  (lambda (x)
-    (let ((expr-4 (* x 3)))
-      (/ (+ expr-4 expr-5 (- x y) expr-4) expr-5))))
+#|
+; Value ->
+(* x 3)
+(- y z)
+"Common subexpression(s) found! add-to-library?"
+#!unspecific
+;Unspecified return value
+|#
 
-(find-in-library '(- y z))
-;Value: (#[uninterned-symbol 14 expr-5])
+(add-to-library 'y-z '(- y z)) ; -> y-z
 
-(find-in-library '(* x 3))
-;Value: (#[uninterned-symbol 15 expr-4])
+
+(find-in-library '(- y z)) ; -> ((y-z))
+
+
+(find-in-library '(* x 3)) ; -> ((|3x|))
+
 
 (pp (gjs/cselim
      '(let ((x 32) (y 5))
         (+ (* x 3) (- x y) (* x 3)))))
 
-; Value:
-(let ((x 32) (y 5))
-  (let ((expr-10 (* x 3)))
-    (+ expr-10 (- x y) expr-10)))
+#|
+; Value ->
+(* x 3)
+"Common subexpression(s) found! add-to-library?"
+#!unspecific
+;Unspecified return value
+|#
 
-(find-in-library '(* x 3))
-;Value: (#[uninterned-symbol 16 expr-10])
+(find-in-library '(* x 3)) ; -> ((|3x|))
 
 
-;;; this test case nor working because fringe-smaller-than? not included
-(pp
- (gjs/cselim
-  '(up
-    (+ (/ (* 1/3 GM (expt dt 3) p_r_0) (* (expt m 2) (expt r_0 3)))
-       (/ (* -1/2 (expt dt 3) (expt p_phi_0 2) p_r_0) (* (expt m 3) (expt r_0 4))))
-    (+ (/ (* (expt dt 3) p_phi_0 (expt p_r_0 2)) (* (expt m 3) (expt r_0 4)))
-       (/ (* 1/3 GM (expt dt 3) p_phi_0) (* (expt m 2) (expt r_0 5)))
-       (/ (* -1/3 (expt dt 3) (expt p_phi_0 3)) (* (expt m 3) (expt r_0 6)))))
-  (fringe-smaller-than? 7)))
-(let ((G44125 (expt dt 3)) (G44128 (* (expt m 3) (expt r_0 4))))
-  (up
-   (+ (/ (* 1/3 GM (expt dt 3) p_r_0) (* (expt m 2) (expt r_0 3)))
-      (/ (* -1/2 G44125 (expt p_phi_0 2) p_r_0) G44128))
-   (+ (/ (* G44125 p_phi_0 (expt p_r_0 2)) G44128)
-      (/ (* 1/3 GM (expt dt 3) p_phi_0) (* (expt m 2) (expt r_0 5)))
-      (/ (* -1/3 G44125 (expt p_phi_0 3)) (* (expt m 3) (expt r_0 6))))))
 |#
