@@ -22,25 +22,43 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;; fnc-library maps keys=expanded procedures to values=(executable name . parameter-list)
 ;;; example: key=(modulo (? x ,symbol?) 10) --> value=(mod10 . (x))
-(define fnc-library)
 
-(define (init-library)
-  (set! fnc-library (make-alist-store eq?)))
+(define (make-alist-library)
+  (make-alist-store eq?))
 
-(define (add-to-library name proc)
-  ((fnc-library 'put!) proc (cons name (gather-parameters proc))) ; add proc to library
-  (bind-proc name proc))
+(define (alist-library? library)
+  (alist? library))
+(register-predicate! alist-library? 'alist-library?)
 
-(define (find-in-library proc)
+(define (add-to-alist library name proc)
+  ((library 'put!) proc (cons name (gather-parameters proc))) ; add proc to library
+  (bind-proc name proc)
+  library)
+
+(define (find-in-alist library proc)
   (let ((match (find (lambda (book) ((matcher book) proc)) 
-		     ((fnc-library 'get-keys)))))
+		     ((library 'get-keys)))))
     (if (not match)
 	'()
-	(let ((library-value ((fnc-library 'get) match))
+	(let ((library-value ((library 'get) match))
 	      (dict (match:new-bindings (match:new-dict)
 					((matcher match) proc))))
 	  (let ((name (car library-value))
 		(params (cdr library-value)))
 	    (let ((matched-params (map-parameters params dict)))
 	      `((,name ,@matched-params))))))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

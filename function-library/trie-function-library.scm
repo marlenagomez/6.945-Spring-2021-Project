@@ -16,18 +16,20 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;;;; User interface
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define fnc-library)
+(define (make-trie-library) (make-trie))
 
-(define (init-library)
-  (set! fnc-library (make-trie)))
+(define (trie-library? library)
+  (trie? library))
+(register-predicate! trie-library? 'trie-library?)
 
-(define (add-to-library name proc)
-  (set-path-value! fnc-library (tmatcher:proc->path proc) name)
+(define (add-to-trie library name proc)
+  (set-path-value! library (tmatcher:proc->path proc) name)
   (add-parameter-list! name (gather-parameters proc))
-  (bind-proc name proc))
+  (bind-proc name proc)
+  library)
 
-(define (find-in-library proc)
-  (let ((match-dict ((t:matcher fnc-library) proc)))
+(define (find-in-trie library proc)
+  (let ((match-dict ((t:matcher library) proc)))
     (if (not (cdr match-dict))
 	'()
 	(let ((value (safe-match-value-lookup tmatch:path-value-keyword 
