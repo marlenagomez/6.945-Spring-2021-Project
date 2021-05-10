@@ -10,8 +10,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-(load "function-library/trie-function-library")      ; trie matching implementation
-;(load "function-library/basic-function-library")    ; basic matching implementation
+(load "function-library/library")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -58,7 +57,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ; ... testing ...
 
-(init-library)
+(setup-library 'trie)
 
 (add-to-library 'expr-10 '(* x 3))
 (match-in-library '(* x 3))       ; -> (((* x 3) (expr-10)))
