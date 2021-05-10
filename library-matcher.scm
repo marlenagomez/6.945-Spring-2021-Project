@@ -10,8 +10,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-(load "function-library")      ; trie matching implementation
-;(load "basic-function-library") ; basic matching implementation
+(load "function-library/trie-function-library")      ; trie matching implementation
+;(load "function-library/basic-function-library")    ; basic matching implementation
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -55,7 +55,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 
 ;------------------------------------------------------------------------
+
 ; ... testing ...
+
+(init-library)
 
 (add-to-library 'expr-10 '(* x 3))
 (match-in-library '(* x 3))       ; -> (((* x 3) (expr-10)))
@@ -77,7 +80,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		     (+ (modulo x 10) (modulo y 10) (modulo z 10))))
 ; -> (define (x y z) (+ (mod10 x) (mod10 y) (mod10 z)))
 
-(mod10 2) ; ->  2
+(mod10 12) ; ->  2
 
 (add-to-library 'add-c-map `(map (lambda (l) (+ l (? x ,number?))) (? y ,list?)))
 (match-in-library '(define (a b c d e f)
