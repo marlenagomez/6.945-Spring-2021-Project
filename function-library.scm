@@ -9,12 +9,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 |#
 
 ;;; Dependencies
-;(load "sdf/manager/load")             ; not sure if needed...
-;(manage 'new 'generic-procedures)     ; loads common/trie.scm
-;(manage 'add 'generic-interpreter)    ; for define-variable!
-
-(load "sdf/common/trie.scm")
-(load "sdf/generic-interpreter/shared-rtdata.scm")
+(load "library-utils")
+(load "trie-matcher")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; User interface
@@ -23,63 +19,104 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define fnc-library (make-trie))
 
 (define (add-to-library name proc)
-  (let ((proc-path (proc->path proc)))
-    (set-path-value! fnc-library proc-path name) ; add proc to library
-    (bind-proc name proc)))                      ; bind name to proc in the-environment
+  (set-path-value! fnc-library (tmatcher:proc->path proc) name)
+  (add-parameter-list! name (gather-parameters proc))
+  (bind-proc name proc))
 
 (define (find-in-library proc)
-  (let ((proc-path (proc->path proc)))
-    (get-a-value fnc-library proc)))
-
-; ... testing ....
-; TODO
+  (let ((match-dict ((t:matcher fnc-library) proc)))
+    (if (not (cdr match-dict))
+	'()
+	(let ((value (safe-match-value-lookup tmatch:path-value-keyword 
+					      match-dict)))
+	  (if (not value) 
+	      '()
+	      (let ((matched-params (map-parameters (get-parameters value) match-dict)))
+		`((,value ,@matched-params))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define the-env (the-environment))
+(define parameter-table (make-alist-store eq?))
+(define (add-parameter-list! name params) ((parameter-table 'put!) name params))
+(define (get-parameters name) ((parameter-table 'get) name))
+(define (has-parameters? name)((parameter-table 'has?) name))
 
-;;; Binds name to (list) proc, as an executable procedure 
-(define (bind-proc name proc)
-  (environment-define the-env 
-		      name 
-		      (lambda () (apply (eval (car proc) the-env) (cdr proc)))))
+;;; Converts a proc to a path of predicates suitable for the library trie
+(define (tmatcher:proc->path proc)
+  (map (lambda (elem)
+	 (if (and (list? elem) (not (is-parameter? elem)))
+	     (let ((inner-trie (make-trie)))
+	       (intern-path-trie inner-trie (tmatcher:proc->path elem))
+	       (lambda (args) inner-trie))
+	     (lambda (args) elem)))
+       proc))
 
-; ... testing ...
-(bind-proc 'test-name '(+ 1 2 3))
-(test-name) ; -> 6
-
-;(bind-proc 'test-name2 '(lambda (x) (pp x)))
-;(test-name2) ; -> [ERROR] Classifier may not be used as an expression: #[classifier-item 24]
+#|
+;;; TODO extension: infer the parameters?
+(infer-program-types '(+ 1 2 3))
+; ***type-error***
+(infer-program-types '(lambda (x) (modulo x 3)))
+#|
+(t (type:procedure ((? x:4)) (? type:7))
+   (infer-program-types (modulo 'x 3))
+   (lambda (x) (t (? type:7) 
+		  ((t (type:procedure ((? x:4) (numeric-type)) 
+				      (? type:7)) modulo) 
+		   (t (? x:4) x) (t (numeric-type) 3)))))
+|#
+(infer-program-types '(modulo x 3))
+#|
+(t (? type:10) 
+   ((t (type:procedure ((? x:8) (numeric-type)) (? type:10)) modulo) 
+    (t (? x:8) x) 
+    (t (numeric-type) 3)))
+|#
+|#
 
 ; --------------------------------
 
-;;; Converts a (list) proc to a path of predicates suitable for the library trie
-(define (proc->path proc)
-  (if (null? proc)
-      '()
-      (let ((first-elem (car proc))
-	    (rest (cdr proc)))
-	(let ((elem-test (lambda (x) (eq? `,x first-elem))))
-	  (append `(,elem-test) (proc->path (cdr proc)))))))
+#|
+; ... testing library ...
 
-; ... testing ...
+(add-to-library '123-test '(+ 1 2 3))
+(find-in-library '(+ 1 2 3))          ; -> (|123-test|)
+(find-in-library '(+ 1 2 4))          ; -> ()
+
+(add-to-library 'mod10 `(modulo (? x ,symbol?) 10))
+(find-in-library '(modulo y 10))      ; -> (mod10)
+
+(trie-edge-alist fnc-library)
+; ... testing bing-proc ...
+
+(bind-proc 'test-name '(+ 1 2 3))
+(test-name) ; -> 6
+
+(bind-proc 'test-lambda '(lambda (x) (+ x 2)))
+(test-lambda)     ; -> #[compound-procedure 19]
+((test-lambda) 1) ; -> 3
+
+;(bind-proc 'test-name2 '(define (x y) (pp y)))
+;(test-name2)          ; -> x
+;((test-name2) 'hello) ; -> The object x is not applicable. *TODO*
+
+; ... testing proc->path ...
 
 (define test-proc '(+ 1 2 3))
 
 (define proc->path:test (proc->path test-proc))
 
-(define name (intern-path-trie fnc-library proc->path:test))
+(define trie-path (intern-path-trie fnc-library proc->path:test))
 
-(set-path-value! fnc-library proc->path:test 'name)
+(set-path-value! fnc-library proc->path:test 'trie-path)
 
 ;;; demonstration: get-a-value given a (list) proc should return the (procedure) name
 (get-a-value fnc-library '(+ 1 2 3)) 
-; -> name
+; -> trie-path
 
 ; --------------------------------
-
+|#
 
 
 
