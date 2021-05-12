@@ -33,7 +33,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (make-tagged-alist-store key=?)
   (cons 'alist-store (make-alist-store key=?)))
 
-(define (alist-store? object) (eq? (car object) 'alist-store))
+(define (alist-store? object) (and (pair? object) 
+				   (eq? (car object) 'alist-store)))
 
 (define (get-store alist-store) (cdr alist-store))
 

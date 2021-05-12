@@ -1,5 +1,5 @@
 #|
-Fun CSE Playground
+Alternate CSE Playground
 
 ---------------------------------------------------------
 Project: 6.945 | Program Refactoring
@@ -10,8 +10,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (load "library-matcher")
 
-(setup-library 'trie)
-
 (define (iterate-over code skip-over)
   ;; helpful procedures
   (define local-lib (setup-library 'trie))
@@ -20,22 +18,32 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (define (generate-expr-name)
     (set! incr (+ incr 1))
     (string->symbol (string-append "expr-" (number->string incr))))
+  (define (depth list) 
+    (if (not (list? list))
+	0
+	(+ 1 (fold + 0 (map depth list)))))
   
   ;; check-then-add each chunk to the local library
   (for-each (lambda (chunk)
 	      (let ((check (find-in local-lib chunk)))
+		(pp (list "checking" chunk))
 		(if (null? check)
 		    (add-local-to local-lib (generate-expr-name) chunk)
 		    (add-local-to useful-lib (caar check) chunk))))
-	    (filter (lambda (c)
-		      (not (memv (car c) skip-over)))
-		    (chunkify code)))
+	    ;; sort relevant chunks in order or increasing size
+	    (sort (filter (lambda (c)
+			    (not (memv (car c) skip-over)))
+			  (chunkify code))
+		  (lambda (a b) (< (depth a) (depth b)))))
   useful-lib)
+
+(define (run-depth-rounds scheme-code found-key-list)
+  ) ;; TODO
 
 (define (run-cse scheme-code)
   (define (recursive-run scheme-code found-key-list)
     (let ((useful-lib (iterate-over scheme-code found-key-list)))
-      (let ((key-list ((get-keys-from (get-all-entries useful-lib)))))
+      (let ((key-list (browse useful-lib)))
 	(if (null? key-list)
 	    scheme-code
 	    (begin 
@@ -43,6 +51,37 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	      (recursive-run (compress useful-lib scheme-code) 
 			     (append key-list found-key-list)))))))
   (recursive-run scheme-code '()))
+
+
+
+;;; TODO extension: infer the parameters?
+(load "sdf/unification/type-resolver")
+(load "sdf/unification/unify")
+
+(infer-program-types '(+ 1 2 3))
+; ***type-error***
+(infer-program-types '(lambda (x) (modulo x 3)))
+#|
+(t (type:procedure ((? x:4)) (? type:7))
+   (infer-program-types (modulo 'x 3))
+   (lambda (x) (t (? type:7)
+                  ((t (type:procedure ((? x:4) (numeric-type))
+                                      (? type:7)) modulo)
+                   (t (? x:4) x) 
+		   (t (numeric-type) 3)))))
+|#
+(infer-program-types '(modulo x 3))
+#|
+(t (? type:10)
+   ((t (type:procedure ((? x:8) (numeric-type)) (? type:10)) modulo)
+    (t (? x:8) x)
+    (t (numeric-type) 3)))
+|#
+
+
+
+
+
 
 (run-cse '(+ 1 2 3))
 ; -> (+ 1 2 3)

@@ -19,7 +19,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (load "sdf/common/match-utils")
 (load "sdf/design-of-the-matcher/matcher")
 
-
 ;;; fnc-library maps keys=expanded procedures to values=(executable name . parameter-list)
 ;;; example: key=(modulo (? x ,symbol?) 10) --> value=(mod10 . (x))
 
@@ -55,7 +54,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (lookup-in-alist library name)
   (find (lambda (key)
 	  (eq? name (car (get key library))))
-	(get-keys-from library)))
+	((get-keys-from library))))
+
+(define (get-all-entries-in-alist library)
+  (map (lambda (key) (car (get key library))) ((get-keys-from library))))
 
 (define (remove-from-alist library name)
   (remove-from! library name)

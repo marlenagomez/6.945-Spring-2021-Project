@@ -65,8 +65,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
     (unbind-proc name)
     library))
 
-(define (get-all-entries library)
-  (lookup-table-of library))
+(define (get-all-entries-in-trie library)
+  ((get-keys-from (lookup-table-of library))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
@@ -81,28 +81,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	       (lambda (args) inner-trie))
 	     (lambda (args) elem)))
        proc))
-
-#|
-;;; TODO extension: infer the parameters?
-(infer-program-types '(+ 1 2 3))
-; ***type-error***
-(infer-program-types '(lambda (x) (modulo x 3)))
-#|
-(t (type:procedure ((? x:4)) (? type:7))
-   (infer-program-types (modulo 'x 3))
-   (lambda (x) (t (? type:7) 
-		  ((t (type:procedure ((? x:4) (numeric-type)) 
-				      (? type:7)) modulo) 
-		   (t (? x:4) x) (t (numeric-type) 3)))))
-|#
-(infer-program-types '(modulo x 3))
-#|
-(t (? type:10) 
-   ((t (type:procedure ((? x:8) (numeric-type)) (? type:10)) modulo) 
-    (t (? x:8) x) 
-    (t (numeric-type) 3)))
-|#
-|#
 
 ; --------------------------------
 
