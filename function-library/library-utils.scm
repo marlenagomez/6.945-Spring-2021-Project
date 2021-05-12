@@ -8,12 +8,40 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ---------------------------------------------------------
 |#
 
+;;; binding / unbinging in the-environment
+
 (define the-env (the-environment))
 
 (define (bind-proc name proc)
   (environment-define the-env
                       name
                       (eval (proc->executable proc) the-env)))
+
+(define (unbind-proc name)
+  (unbind-variable the-env name))
+
+(define (get-executable sym)
+  (if (environment-bound? the-env sym)
+      (environment-lookup the-env sym)
+      #f))
+
+(define (local-evaluation proc)
+  (eval (proc->executable proc) the-env))
+
+;;; alist-store support
+
+(define (make-tagged-alist-store key=?)
+  (cons 'alist-store (make-alist-store key=?)))
+
+(define (alist-store? object) (eq? (car object) 'alist-store))
+
+(define (get-store alist-store) (cdr alist-store))
+
+(define (add-to! store key value) (((get-store store) 'put!) key value))
+(define (get key store) (((get-store store) 'get) key))
+(define (has? store key) (((get-store store) 'has?) key))
+(define (remove-from! store key) (del-assv! key (get-store store)))
+(define (get-keys-from store) ((get-store store) 'get-keys))
 
 ;;; converts a match-formatted list to an executable lambda procedure
 ;;; by gathering the unknowns as parameters and regularizing the procedure

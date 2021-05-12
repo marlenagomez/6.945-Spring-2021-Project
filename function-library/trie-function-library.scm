@@ -16,37 +16,61 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;;;; User interface
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (make-trie-library) (make-trie))
+(define (make-trie-library) 
+  (cons (make-trie) (make-tagged-alist-store eq?)))
+
+(define (trie-of library) (car library))
+(define (lookup-table-of library) (cdr library))
 
 (define (trie-library? library)
-  (trie? library))
+  (and (pair? library)
+       (trie? (trie-of library))
+       (alist-store? (lookup-table-of library))))
 (register-predicate! trie-library? 'trie-library?)
 
 (define (add-to-trie library name proc)
-  (set-path-value! library (tmatcher:proc->path proc) name)
-  (add-parameter-list! name (gather-parameters proc))
+  (set-path-value! (trie-of library) (tmatcher:proc->path proc) name)
+  (add-to! (lookup-table-of library) name proc)
   (bind-proc name proc)
   library)
 
+(define (add-local-to-trie library name proc)
+  (set-path-value! (trie-of library) (tmatcher:proc->path proc) name)
+  (add-to! (lookup-table-of library) name proc)
+  library)
+
 (define (find-in-trie library proc)
-  (let ((match-dict ((t:matcher library) proc)))
+  (let ((match-dict ((t:matcher (trie-of library)) proc)))
     (if (not (cdr match-dict))
 	'()
 	(let ((value (safe-match-value-lookup tmatch:path-value-keyword 
 					      match-dict)))
 	  (if (not value) 
 	      '()
-	      (let ((matched-params (map-parameters (get-parameters value) match-dict)))
-		`((,value ,@matched-params))))))))
+	      (let ((proc (get value (lookup-table-of library))))
+		(let ((matched-params (map-parameters 
+				       (gather-parameters proc) 
+				       match-dict)))
+		  `((,value ,@matched-params)))))))))
+
+(define (lookup-in-trie library name)
+  (get name (lookup-table-of library)))
+
+(define (remove-from-trie library name)
+  (let ((proc ((get-executable name))))
+    (pp (list "removing" proc))
+    (pp (list? proc))
+    (set-path-value! (trie-of library) (tmatcher:proc->path proc) 'the-nothing-value)
+    (remove-from! (lookup-table-of library) name)
+    (unbind-proc name)
+    library))
+
+(define (get-all-entries library)
+  (lookup-table-of library))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Internal (helper) procedures
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define parameter-table (make-alist-store eq?))
-(define (add-parameter-list! name params) ((parameter-table 'put!) name params))
-(define (get-parameters name) ((parameter-table 'get) name))
-(define (has-parameters? name)((parameter-table 'has?) name))
 
 ;;; Converts a proc to a path of predicates suitable for the library trie
 (define (tmatcher:proc->path proc)

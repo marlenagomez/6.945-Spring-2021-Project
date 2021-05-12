@@ -56,8 +56,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;------------------------------------------------------------------------
 
 ; ... testing ...
-
+#|
 (define library (setup-library 'trie))
+(trie-library? library)                ; -> #t
 
 (add-to library 'expr-10 '(* x 3))
 (match-in library '(* x 3))       ; -> (((* x 3) (expr-10)))
@@ -112,6 +113,16 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define (a b c d e f) 
   (append (add-c-map 4 (a b c)) 
 	  (map (lambda (m) (mod10 m)) (d e f))))
+|#
+
+(remove-from library 'add-c-map) ; -> TODO: not working rn
+
+(compress library '(map (lambda (l) (+ l 4)) (a b c d e f)))
+; ->  (add-c-map 4 (a b c d e f))
+
+(add-c-map 10 '(1 2)) ; -> (11 12)
+
+((run-locally library 'add-c-map) 4 '(3 2 1)) ; -> (7 6 5)
 |#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
