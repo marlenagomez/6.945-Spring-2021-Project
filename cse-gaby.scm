@@ -1,5 +1,6 @@
 #|
 Alternate CSE Playground
+("Global" CSE)
 
 ---------------------------------------------------------
 Project: 6.945 | Program Refactoring
@@ -10,6 +11,16 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (load "library-matcher")
 
+(define (make-symbol str num)
+  (string->symbol (string-append str (number->string num))))
+
+(define (matchify chunk)
+  (cond ((integer? chunk) `(? ,(make-symbol "x" chunk) ,number?))
+	((symbol? chunk) `(? ,chunk ,symbol?))
+	((and (list? chunk) (not (null? chunk)))
+	 (append `(,(car chunk)) (map matchify (cdr chunk))))
+	(else chunk)))
+
 (define (iterate-over code skip-over)
   ;; helpful procedures
   (define local-lib (setup-library 'trie))
@@ -17,7 +28,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (define incr 0)
   (define (generate-expr-name)
     (set! incr (+ incr 1))
-    (string->symbol (string-append "expr-" (number->string incr))))
+    (make-symbol "expr-" incr))
   (define (depth list) 
     (if (not (list? list))
 	0
@@ -26,10 +37,13 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   ;; check-then-add each chunk to the local library
   (for-each (lambda (chunk)
 	      (let ((check (find-in local-lib chunk)))
-		(pp (list "checking" chunk))
 		(if (null? check)
-		    (add-local-to local-lib (generate-expr-name) chunk)
-		    (add-local-to useful-lib (caar check) chunk))))
+		    (add-local-to local-lib 
+				  (generate-expr-name) 
+				  (matchify chunk))
+		    (add-local-to useful-lib 
+				  (caar check) 
+				  (matchify chunk)))))
 	    ;; sort relevant chunks in order or increasing size
 	    (sort (filter (lambda (c)
 			    (not (memv (car c) skip-over)))
@@ -37,20 +51,38 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		  (lambda (a b) (< (depth a) (depth b)))))
   useful-lib)
 
-(define (run-depth-rounds scheme-code found-key-list)
-  ) ;; TODO
-
 (define (run-cse scheme-code)
   (define (recursive-run scheme-code found-key-list)
     (let ((useful-lib (iterate-over scheme-code found-key-list)))
       (let ((key-list (browse useful-lib)))
 	(if (null? key-list)
 	    scheme-code
-	    (begin 
-	      (pp (compress useful-lib scheme-code))
-	      (recursive-run (compress useful-lib scheme-code) 
-			     (append key-list found-key-list)))))))
+	    (recursive-run (compress useful-lib scheme-code) 
+			   (append key-list found-key-list))))))
   (recursive-run scheme-code '()))
+
+
+
+
+(run-cse '(+ 1 2 3))
+; -> (+ 1 2 3)
+
+(run-cse '(+ (* x 3) (- x y) (* x 3) (- x y)))
+; w/out matchify -> (+ (expr-2) (expr-3) (expr-2) (expr-3))
+; w/matchify -> (+ (expr-1 x 3) (expr-2 x y) (expr-1 x 3) (expr-2 x y))
+ 
+(run-cse '(lambda (x)
+	    (/ (+ (* x 3) (- y z) (- x y) (* x 3))
+	       (- y z))))
+; w/out matchify: -> (lambda (x) (/ (+ (expr-5) (expr-6) (- x y) (expr-5)) (expr-6)))
+; with matchify: -> (lambda (x) (/ (+ (expr-2 x 3) (expr-3 y z) (expr-3 x y) (expr-2 x 3)) (expr-3 y z)))
+
+(run-cse '(+ (* (+ a b c) (- a b c))
+	     (* (+ a b c) (- a b c))))
+; w/out matchify -> (+ (expr-2) (expr-2))
+; with matchify -> (+ (expr-3 a b c) (expr-3 a b c))
+
+
 
 
 
@@ -83,17 +115,4 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 
 
-(run-cse '(+ 1 2 3))
-; -> (+ 1 2 3)
 
-(run-cse '(+ (* x 3) (- x y) (* x 3) (- x y)))
-; -> (+ (expr-2) (expr-3) (expr-2) (expr-3))
-
-(run-cse '(lambda (x)
-	    (/ (+ (* x 3) (- y z) (- x y) (* x 3))
-	       (- y z))))
-; -> (lambda (x) (/ (+ (expr-5) (expr-6) (- x y) (expr-5)) (expr-6)))
-
-(run-cse '(+ (* (+ a b c) (- a b c))
-	     (* (+ a b c) (- a b c))))
-; -> (+ (expr-2) (expr-2))
