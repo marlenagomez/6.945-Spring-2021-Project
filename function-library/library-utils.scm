@@ -59,7 +59,12 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;; gathers the unknowns into a list
 (define (gather-parameters proc)
-  (map param-name (filter is-parameter? (flatten-proc proc))))
+  (fold (lambda (x curr-list) 
+	  (if (not (memv x curr-list)) 
+	      (append curr-list `(,x))
+	      curr-list))
+	'()
+	(map param-name (filter is-parameter? (flatten-proc proc)))))
 
 ;;; converts unknowns into symbols
 ;;; e.g. (modulo (? x ,number?) 10) becomes (modulo x 10)
