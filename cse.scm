@@ -32,6 +32,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	  (car l)
 	  (find-matching-item (cdr l) pred))))
 
+
 (define (gjs/cselim expression #!optional not-worth-subdividing?)
   (if (default-object? not-worth-subdividing?)
       (set! not-worth-subdividing? (lambda (expr) #f)))
@@ -95,12 +96,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                                                  (make-canonical-lets let-variables
                                                                       let-body))))
 
-    ;                  (pp "here")
-                      (if (> (length let-variables) 0)
-                        (pp "Common subexpression(s) found! add-to-library?")))))
-                      ;(record-expression! expression-recorder
-                      ;                    canonical-expression
-                      ;                    new-bound-variables))))
+                            (if (> (length let-variables) 0)
+                              (pp "Common subexpression(s) found! add-to-library?")))))
+
 
                (else
                 (let ((canonical-expression
@@ -118,9 +116,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
            (let-body
             (variable->expression initial-expression-recorder
                                   canonical-expression)))
+
       (if (> (length let-variables) 0)
-        (pp "Common subexpression(s) found! add-to-library?")))))))
-      ;(make-canonical-lets let-variables let-body))))
+        (pp "Common subexpression(s) found! add-to-library?")))))
 
 
 
@@ -134,14 +132,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
            `(let ,used-bindings ,body)))))
 
 (define (make-canonical-lets bindings body)
-;  (pp bindings)
-;  (pp (> (length bindings) 0))
-
-;  (if (> (length bindings) 0) ; add repeated expression to library
-;      (add-to-library (intern (symbol->string (caar bindings)))
-;		      (cadar bindings))
-;  )
-
   (if (null? bindings)
       body
       (let-values
@@ -182,6 +172,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                  (else
                   ((parent-recorder 'record!) expression ignored-variables)))))
         ((seen)
+
          (let lp ((entries (reverse local-expressions-seen)) (results '()))
            (cond ((null? entries) (reverse results))
                  ((fix:= (caddar entries) 1)
@@ -195,6 +186,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                   (lp (cdr entries)
                       (cons (list (cadar entries) (caar entries))
                             results))))))
+
+
         ((get-entry)
          (lambda (variable)
            (if (symbol? variable)
@@ -230,6 +223,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
            (memq expression variables))
           (else
            (eq? variables expression)))))
+
+
 
 #|
 
