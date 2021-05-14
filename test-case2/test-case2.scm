@@ -86,7 +86,7 @@
 (variance (list 0 2)) ; -> 2.0
 |#
 
-(load "sdf/manager/load")
+(load "../sdf/manager/load")
 (manage 'new 'term)
 
 (algebra-2 '(+ (+ (/ (* 1/3 GM (expt dt 3) p_r_0) (* (expt m 2) (expt r_0 3)))

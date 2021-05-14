@@ -175,7 +175,7 @@
          (variance-iter d 0.))))
  (define (expr-21 d)
    (* (expr-18 d) (expr-18 d)))
- (load "sdf/manager/load")
+ (load "../sdf/manager/load")
  (expr-67 new term)
  (algebra-2
   '(+
