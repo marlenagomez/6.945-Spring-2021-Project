@@ -93,6 +93,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ; w/out matchify -> (+ (expr-2) (expr-2))
 ; with matchify -> (+ (expr-3 a b c) (expr-3 a b c))
 
+(run-cse '(+ (* (+ a b c) (- a b c))
+	     (* (+ x y z) (- x y z)))) 
+; w/out matchify -> (+ (* (+ a b c) (- a b c)) (* (+ x y z) (- x y z))) 
+; with matchify -> (+ (expr-3 a b c) (expr-3 x y z))
 
 
 ;;; TODO extension: infer the parameters?

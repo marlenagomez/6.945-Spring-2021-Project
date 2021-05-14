@@ -10,8 +10,11 @@
 (define library (setup-library))
 (trie-library? library)                
 (alist-library? library)
+(is-redundant? library)
 
-(browse library)
+(browse library) ; -> ()
+
+(lookup library 'does-not-exist) ; -> #f
 
 (add-to library 'expr-10 '(* x 3))
 (match-in library '(* x 3))       ; -> (((* x 3) (expr-10)))
@@ -80,7 +83,7 @@
 
 (browse library)
 
-
+(lookup library '1+2+3)
 
 
 

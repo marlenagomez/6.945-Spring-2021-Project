@@ -54,7 +54,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		  `((,value ,@matched-params)))))))))
 
 (define (lookup-in-trie library name)
-  (get name (lookup-table-of library)))
+  (if (has? (lookup-table-of library) name)
+      (get name (lookup-table-of library))
+      #f))
 
 (define (remove-from-trie library name)
   (let ((proc ((get-executable name))))

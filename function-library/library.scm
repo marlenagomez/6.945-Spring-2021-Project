@@ -13,14 +13,6 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ;;; Redundant Library
 
-(define (setup-redundant) (list (make-trie-library) (make-alist-library))) ; can hold any # of libraries
-
-(define (is-redundant? library)
-  (and (list? library)
-       (every (lambda (lib) (or (alist-library? lib)
-				(trie-library? lib)))
-	      library)))
-
 (define (intersection . lists)
   (cond ((= 0 (length lists)) '())
         ((= 1 (length lists)) (car lists))
@@ -42,7 +34,60 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 				 l))
 		     (filter (lambda (l) (> (length l) 0)) lists))
 	   output))))
-				 
+
+(define (make-redundant setup)
+  
+  (define (add type implementation)
+    ((implementations 'put!) type (cons implementation '())))
+
+  (define (add-tags type sticky-notes)
+    (if ((implementations 'has?) type)
+	((implementations 'put!) type (append ((implementations 'get) type)
+					      sticky-notes))))
+  
+  (define (get-implementations)
+    (map (lambda (key) (car ((implementations 'get) key))) 
+	 ((implementations 'get-keys))))
+  
+  (define (get-implementation type)
+    (cadr ((implementations 'get) type)))
+  
+  (define (get-sticky-notes type)
+    (cddr ((implementations 'get) type)))
+  
+  (define (filter-by-sticky-note note)
+    (filter (lambda (type) (memv tag (get-sticky-notes note))) ((implementations 'get-keys))))
+  
+  (define (combine-results operation combiner)
+    (apply combiner (map-op operation)))
+  
+  (define (map-op operation)
+    (map operation (get-implementations)))
+  
+  ;; setup the implementations and the message receiver
+  (define implementations (make-alist-store eq?))       ; (type -> (implementation . sticky-notes))
+  (for-each (lambda (i) ((implementations 'put!) (car i) (cons (cdr i) '()))) setup)
+
+  (lambda (arg)
+    (case arg
+      ((is-redundant?) #t)
+      ((map-op) map-op)
+      ((combine-results) combine-results)
+      ((add) add)
+      ((add-tags) add-tags)
+      ((get-implementations) get-implementations)
+      ((get-implementation) get-implementation)
+      ((get-tags) get-tags)
+      ((filter-by-tag) filter-by-tag)
+      (else #f))))
+
+(define (setup-redundant) (make-redundant (list (cons 'trie (make-trie-library)) 
+						(cons 'alist (make-alist-library))))) ; can hold any # of libraries
+
+(define (is-redundant? library)
+  (and (procedure? library)
+       (library 'is-redundant?))) ; TODO: make more robust
+		 
 ;;; Handles setup of the library
 
 (define (setup-library #!optional type)
@@ -75,7 +120,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;; coderef: redundant
 (define-generic-procedure-handler add-to
   (match-args is-redundant? symbol? list?)
-  (lambda (library name proc) (map (lambda (l) (add-to l name proc)) library)))
+  (lambda (library name proc) 
+    ((library 'map-op) (lambda (l) (add-to l name proc)))))
 
 ;;; --- adding locally to the library ---
 
@@ -97,7 +143,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;; coderef: redundant
 (define-generic-procedure-handler add-local-to
   (match-args is-redundant? symbol? list?)
-  (lambda (library name proc) (map (lambda (l) (add-local-to l name proc)) library)))
+  (lambda (library name proc)
+    ((library 'map-op) (lambda (l) (add-local-to l name proc)))))
 
 ;;; --- searching in the library ---
 
@@ -120,7 +167,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define-generic-procedure-handler find-in
   (match-args is-redundant? list?)
   (lambda (library proc)
-    (apply intersection (map (lambda (l) (find-in l proc)) library))))
+    ((library 'combine-results) (lambda (l) (find-in l proc)) intersection)))
 
 ;;; --- lookup a name in the library ---
 
@@ -147,7 +194,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (lambda (library name)
     ;; find the first existing lookup result not equal to #f
     (find (lambda (x) x) 
-	  (map (lambda (l) (lookup l name)) library))))
+	  ((library 'map-op) (lambda (l) (lookup l name))))))
 
 ;;; --- running locally via the library ---
 
@@ -155,7 +202,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (let ((proc (lookup library name)))
     (if proc
 	(local-evaluation proc)
-	(error "Proocedure not in library:" name))))
+	(error "Procedure not in library:" name))))
 
 (define run-locally 
   (simple-generic-procedure 'run-locally 2 default-run))
@@ -181,8 +228,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define-generic-procedure-handler remove-from
   (match-args is-redundant? symbol?)
   (lambda (library name) 
-    (map (lambda (l) (remove-from-trie l name)) 
-	 library)))
+    ((library 'map-op) (lambda (l) (remove-from-trie l name)))))
 
 ;;; --- browsing the library ---
 
@@ -205,7 +251,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (define-generic-procedure-handler browse
   (match-args is-redundant?)
   (lambda (library) 
-    (apply union (map browse library))))
+    ((library 'combine-results) browse union)))
+
 
 
 
