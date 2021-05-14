@@ -104,7 +104,7 @@
 
 (define (get-highest-average lists)
   (let ((first-list (car lists)))
-    (if (= 1 (length lists)) 
+    (if (= 1 (length lists))
         (/ (apply + first-list) (length first-list))
         (max (/ (apply + first-list) (length first-list)) (get-highest-average (cdr lists))))))
 
@@ -112,11 +112,16 @@
 (get-highest-average (list (list 1 2 3) (list 2 3 4))) ; -> 3
 |#
 
+(define (get-lowest-average lists)
+  (let ((first-list (car lists)))
+    (if (= 1 (length lists))
+        (/ (apply + first-list) (length first-list))
+        (min (/ (apply + first-list) (length first-list)) (get-lowest-average (cdr lists))))))
 
 (define (even-sum? x y)
-  (if 
-  (or 
-    (and 
+  (if
+  (or
+    (and
       (eq? #t (if (and (= (remainder x 2) 0) (> x 0))
         #f
         #t)))
@@ -139,5 +144,25 @@
 
 
 
+(define make-interval cons)
 
+(define lower-bound car)
 
+(define upper-bound cdr)
+
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+#|
+(add-interval (make-interval 1 1) (make-interval 2 2)) ; -> (3 . 3)
+(mul-interval (make-interval 1 2) (make-interval 2 3)) ; -> (2 . 6)
+|#
