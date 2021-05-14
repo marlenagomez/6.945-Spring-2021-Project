@@ -1,4 +1,3 @@
-
 (define (expr-50 b x4 a c)
   (sqrt (- (* b b) (* x4 a c))))
 
