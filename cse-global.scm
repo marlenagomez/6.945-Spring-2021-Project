@@ -135,6 +135,22 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 (+ (expr-3 a b c) (expr-3 x y z)))
 |#
 
+(run-cse '(define (area-vol-differences l1 h1 w1 l2 h2 w2)
+	    (list (- (* l1 h1) (* l2 h2))
+		  (- (* l1 h1 w1) (* l2 h2 w2)))))
+#|
+(
+(define (expr-4 l1 h1 w1 l2 h2 w2) 
+  (- (* l1 h1 w1) (* l2 h2 w2))) 
+(define (expr-3 l2 h2 w2) (* l2 h2 w2)) 
+(define (expr-2 l2 h2) (* l2 h2)) 
+(define (area-vol-differences l1 h1 w1 l2 h2 w2) 
+  (list (- (expr-2 l1 h1) (expr-2 l2 h2)) 
+	(expr-4 l1 h1 w1 l2 h2 w2))))
+|#
+
+
+
 ;;; TODO extension: infer the parameters?
 
 (load "sdf/unification/type-resolver")
