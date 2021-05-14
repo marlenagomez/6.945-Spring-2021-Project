@@ -1,6 +1,6 @@
-(cd "..")
+(cd "../..")
 
-(load "library-matcher.scm")
+(load "function-library/library.scm")
 (load "cse.scm")
 (load "cse-global.scm")
 
