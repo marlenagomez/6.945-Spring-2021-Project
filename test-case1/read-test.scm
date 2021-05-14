@@ -1,19 +1,21 @@
+(cd "..")
+
 (load "library-matcher.scm")
 (load "cse.scm")
 (load "cse-global.scm")
 
 ;; prints next object
-(pp (with-input-from-file "~/6.945/sdf/common/arith.scm" 
+(pp (with-input-from-file "~/6.945/sdf/common/arith.scm"
   (lambda ()
     (read))))
 
 ;; prints first char in file
-(with-input-from-file "~/6.945/sdf/common/arith.scm" 
+(with-input-from-file "~/6.945/sdf/common/arith.scm"
   (lambda ()
     (read-char)))
 
 ;; identifies when first char is a #
-(eqv? '#\# (with-input-from-file "~/6.945/sdf/common/arith.scm" 
+(eqv? '#\# (with-input-from-file "~/6.945/sdf/common/arith.scm"
 	     (lambda ()
 	       (read-char))))
 
@@ -36,7 +38,7 @@
 
 (read-doc "~/6.945/project/6.945-Spring-2021-Project/test-case1.scm")
 
-;; refactor applies the cse 
+;; refactor applies the cse
 
 (define (refactor file-path)
   (map (lambda (x) (name-prompt x) (gjs/cselim (read-doc file-path)))
@@ -85,4 +87,4 @@
     (lambda ()
       (read))))
 
-(read-file "~/6.945/project/6.945-Spring-2021-Project/test-case1.scm")
+(read-file "~/6.945/project/6.945-Spring-2021-Project/test-case1/test-case1.scm")
