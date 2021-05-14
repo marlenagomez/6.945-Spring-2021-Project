@@ -47,9 +47,14 @@ The common subexpression eliminator identifies instances of identical algebraic 
 #### global-cse.scm
 The global cse identifies instances of *similar* expressions to use for compression. The global cse uses the matching functionality of the function library to support finding similar subexpression that can be abstracted out into named procedures that take in the differences as parameters. 
 
-### Replacement
+### Testing
 
-#### On branch: unify
+#### run.scm
+Holds procedures for reading in code from a file and writing out code to a file, as well as importing all the necessary dependencies for compressing code using the gjs/cse, global cse, or library matching. See various test case folders for examples.
+
+### Additional Replacement
+
+#### match-replace.scm
 The matcher takes an entry from the function library which is known to be within the inputted Scheme code being analyzed. 
 The apply-run-matcher function then tries to match the function’s name, unknowns and body using run-matcher (from SDF), checking each possible sub-expression starting from largest to smallest. 
 If unknowns are successfully identified with run-matcher, resolved-unknowns are returned in the format (unknown-variable resolved-value ?)
