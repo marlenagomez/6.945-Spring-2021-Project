@@ -12,7 +12,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;;;; Simple-minded common-subexpression eliminator.
 ;;;    GJS: 9 December 2005, 23 December 2019
 
-(load "function-library")
+;(load "function-library.scm")
 
 (declare (usual-integrations))
 
