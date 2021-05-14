@@ -193,7 +193,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
   (match-args is-redundant? symbol?)
   (lambda (library name)
     ;; find the first existing lookup result not equal to #f
-    (find (lambda (x) x) 
+    (find (lambda (x) x)
 	  ((library 'map-op) (lambda (l) (lookup l name))))))
 
 ;;; --- running locally via the library ---

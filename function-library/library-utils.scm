@@ -25,8 +25,8 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
       (environment-lookup the-env sym)
       #f))
 
-(define (local-evaluation proc)
-  (eval (proc->executable proc) the-env))
+(define (local-evaluation executable-proc)
+  (eval executable-proc the-env))
 
 ;;; alist-store support
 

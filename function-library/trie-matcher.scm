@@ -11,6 +11,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;;;; Expanded from SDF's pattern and graph matchers
 
 ;;; dependencies
+;;; (note: for testing directly, must add ../ before every file
 
 (load "sdf/common/overrides")
 (load "sdf/common/collections")
@@ -63,7 +64,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		       ;; 3 options: either we are at a leaf with a path
 		       ;; value, a leaf with no path value of an anonymous trie, 
 		       ;; or we are not yet at a leaf
-		       (cond ((and must-end-in-path-value path-value)               ; condition 1: we are done matching
+		       (cond ((and must-end-in-path-value 
+				   path-value
+				   (= 1 (length object)))                           ; condition 1: we are done matching
 			      (succeed 
 			       (tmatch:extend-with-path-value path-value dict1)
 			       1))
@@ -115,6 +118,12 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
                                  (lambda (args) 'z))
                  'xuz-path)
 
+(set-path-value! test-trie (list (lambda (args) 'x)
+                                 (lambda (args) `(? y ,number?))
+                                 (lambda (args) 'z)
+				 (lambda (args) 'z))
+                 'xuzz-path)
+
 ((t:matcher test-trie) '(x y z))
 ; -> (dict ($value xyz-path ?)) 
 
@@ -123,6 +132,9 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 ((t:matcher test-trie) '(x 3 c))
 ; -> Value: (dict . #f)
+
+((t:matcher test-trie) '(x 9 z z))
+; ->  (dict ($value xuzz-path ?) (y 9 ?))
 
 (set-path-value! test-trie (list (lambda (args) 'a)
                                  (lambda (args) `(? y ,symbol?))
