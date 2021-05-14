@@ -59,6 +59,11 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 		  (lambda (a b) (< (depth a) (depth b)))))
   useful-lib)
 
+(define (convert-to-define name lambda-statement)
+  (let ((params (cadr lambda-statement))
+	(body (cddr lambda-statement)))
+    `(define (,name ,@params) ,@body)))
+
 ;;; the entry point into the global cse recursively runs the iteration 
 ;;; (above), compressing the scheme-code using the useful library
 ;;; returned by the iterator, stopping when no useful compress can occur.
@@ -68,12 +73,14 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
     (let ((useful-lib (iterate-over scheme-code found-key-list)))
       (let ((key-list (browse useful-lib)))
 	(if (null? key-list)
-	    (cons findings scheme-code)
+	    (append findings `(,scheme-code))
 	    (begin
 	      (set! findings 
 		    (append findings
 			    (map (lambda (key)
-				   (cons key `(,(lookup useful-lib key))))
+				   (convert-to-define key 
+						      (lookup useful-lib 
+							      key)))
 				 key-list)))
 	      (recursive-run (compress useful-lib scheme-code) 
 			     (append key-list found-key-list)))))))
@@ -83,12 +90,20 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ; ---  testing  ---
 
 (run-cse '(+ 1 2 3))
-; -> (() (+ 1 2 3))
+; -> ((+ 1 2 3))
 
 (run-cse '(+ (* x 3) (- x y) (* x 3) (- x y)))
 ; w/out matchify -> (+ (expr-2) (expr-3) (expr-2) (expr-3))
 ; w/matchify -> (+ (expr-1 x 3) (expr-2 x y) (expr-1 x 3) (expr-2 x y))
- 
+#|
+(
+(define (expr-2 x y) (- x y)) 
+(define (expr-1 x x3) (* x x3)) 
+(+ (expr-1 x 3) (expr-2 x y) (expr-1 x 3) (expr-2 x y))
+)
+|# 
+
+
 (run-cse '(lambda (x)
 	    (/ (+ (* x 3) (- y z) (- x y) (* x 3))
 	       (- y z))))
@@ -99,12 +114,26 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	     (* (+ a b c) (- a b c))))
 ; w/out matchify -> (+ (expr-2) (expr-2))
 ; with matchify -> (+ (expr-3 a b c) (expr-3 a b c))
+#|
+(
+(define (expr-3 a b c) (* (+ a b c) (- a b c))) 
+(define (expr-2 a b c) (- a b c)) 
+(define (expr-1 a b c) (+ a b c)) 
+(+ (expr-3 a b c) (expr-3 a b c))
+)
+|#
 
 (run-cse '(+ (* (+ a b c) (- a b c))
 	     (* (+ x y z) (- x y z)))) 
 ; w/out matchify -> (+ (* (+ a b c) (- a b c)) (* (+ x y z) (- x y z))) 
 ; with matchify -> (+ (expr-3 a b c) (expr-3 x y z))
-
+#|
+(
+(define (expr-3 x y z) (* (+ x y z) (- x y z))) 
+(define (expr-2 x y z) (- x y z)) 
+(define (expr-1 x y z) (+ x y z)) 
+(+ (expr-3 a b c) (expr-3 x y z)))
+|#
 
 ;;; TODO extension: infer the parameters?
 

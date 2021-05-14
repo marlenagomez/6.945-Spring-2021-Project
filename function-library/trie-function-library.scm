@@ -55,7 +55,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 (define (lookup-in-trie library name)
   (if (has? (lookup-table-of library) name)
-      (get name (lookup-table-of library))
+      (proc->executable (get name (lookup-table-of library)))
       #f))
 
 (define (remove-from-trie library name)

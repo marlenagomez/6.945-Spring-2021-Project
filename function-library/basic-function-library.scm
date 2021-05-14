@@ -52,9 +52,10 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 	      `((,name ,@matched-params))))))))
 
 (define (lookup-in-alist library name)
-  (find (lambda (key)
-	  (eq? name (car (get key library))))
-	((get-keys-from library))))
+  (let ((output (find (lambda (key)
+			(eq? name (car (get key library))))
+		      ((get-keys-from library)))))
+    (if output (proc->executable output) #f)))
 
 (define (get-all-entries-in-alist library)
   (map (lambda (key) (car (get key library))) ((get-keys-from library))))

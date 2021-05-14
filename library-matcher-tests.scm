@@ -84,6 +84,9 @@
 (browse library)
 
 (lookup library '1+2+3)
+(lookup library 'mod10)
+(lookup library 'add-c-map)
+
 
 
 
