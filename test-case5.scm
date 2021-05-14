@@ -33,10 +33,25 @@
 			     (list l1 l2 l3 l4 l5))))
       (apply + avg-ls))))
 
+(define (num-real-solutions a b c)
+  (cond ((> 0 (- (* b b) (* 4 a c))) 0)
+	((< 0 (- (* b b) (* 4 a c))) 2)
+	(else 1)))
 
+(define (quadratic-solutions a b c)
+  (values (/ (+ (negate b) (sqrt (- (* b b) (* 4 a c))) (* 2 a)))
+	  (/ (- (negate b) (sqrt (- (* b b) (* 4 a c))) (* 2 a)))))
 
+(define (expected-value X P)
+  (apply + (map * X P)))
 
+(define (variance X P)
+  (let ((Y (map (lambda (x0) (- x0 (apply + (map * X P)))) X)))
+    (let ((Y-squared (map * Y Y)))
+      (apply + (map * Y-squared P)))))
 
+(define (vector-expected-value V P)
+  (apply + (map (lambda (v0 p0) (lambda (v0-elem) (* v0-elem p0)) v0) V P)))
 
 
 
