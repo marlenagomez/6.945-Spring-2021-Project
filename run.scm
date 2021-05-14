@@ -1,4 +1,9 @@
-(load "library-matcher.scm")
+;;;; run.scm
+;;;; Handles reading and writing to .scm files
+;;;; Imports the necessary dependencies for 
+;;;; compressing the code in the loaded files
+
+(load "function-library/library.scm")
 (load "cse.scm")
 (load "cse-global.scm")
 
