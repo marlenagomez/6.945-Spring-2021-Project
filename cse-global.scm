@@ -63,20 +63,27 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 ;;; (above), compressing the scheme-code using the useful library
 ;;; returned by the iterator, stopping when no useful compress can occur.
 (define (run-cse scheme-code)
+  (define findings '())
   (define (recursive-run scheme-code found-key-list)
     (let ((useful-lib (iterate-over scheme-code found-key-list)))
       (let ((key-list (browse useful-lib)))
 	(if (null? key-list)
-	    scheme-code
-	    (recursive-run (compress useful-lib scheme-code) 
-			   (append key-list found-key-list))))))
+	    (cons findings scheme-code)
+	    (begin
+	      (set! findings 
+		    (append findings
+			    (map (lambda (key)
+				   (cons key `(,(lookup useful-lib key))))
+				 key-list)))
+	      (recursive-run (compress useful-lib scheme-code) 
+			     (append key-list found-key-list)))))))
   (recursive-run scheme-code '()))
 
 
 ; ---  testing  ---
 
 (run-cse '(+ 1 2 3))
-; -> (+ 1 2 3)
+; -> (() (+ 1 2 3))
 
 (run-cse '(+ (* x 3) (- x y) (* x 3) (- x y)))
 ; w/out matchify -> (+ (expr-2) (expr-3) (expr-2) (expr-3))
