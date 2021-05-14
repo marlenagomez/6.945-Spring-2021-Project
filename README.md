@@ -10,11 +10,11 @@ We broke program refactoring into four main subproblems: common subexpression el
 
 ###  Function Library
 
-The function library is a library of “memoized” procedures that have a name. The function library supports two procedures:
+The function library is a library of “memoized” procedures that have a name. The function library supports multiple procedures, such:
 
-(add-to-library name proc) Adds procedure proc to the library with name name. name is now defined to be proc in the Scheme working environment. The proc parameter must be a list formatted to be matched against, and can contain variables to match to (or not).
+(add-to library name proc) Adds procedure proc to the library with name name. name is now defined to be proc in the Scheme working environment. The proc parameter must be a list formatted to be matched against, and can contain variables to match to (or not).
 
-(find-in-library proc) Attempts to find a procedure stored in the library that matches proc. If one is found, a procedure call with the appropriate parameters is returned; otherwise, an empty list is returned.
+(find-in library proc) Attempts to find a procedure stored in the library that matches proc. If one is found, a procedure call with the appropriate parameters is returned; otherwise, an empty list is returned.
 
 #### function-library/library-utils.scm
 Holds utilities that support the library useful for any underlying implementation of the library itself.
@@ -45,12 +45,12 @@ Test cases for the library matcher.
 The common subexpression eliminator identifies instances of identical algebraic expressions and replaces them with a single variable. Any identified common subexpressions in the analyzed code are added to the function library. The implementation uses Professor Sussman’s gjs-cselim.scm code.
 
 #### global-cse.scm
-The global cse identifies instances of *similar* expressions to use for compression. The global cse uses the matching functionality of the function library to support finding similar subexpression that can be abstracted out into named procedures that take in the differences as parameters. 
+The global cse is a WIP that identifies instances of *similar* expressions to use for compression. The global cse uses the matching functionality of the function library to support finding similar subexpression that can be abstracted out into named procedures that take in the differences as parameters. 
 
 ### Testing
 
 #### run.scm
-Holds procedures for reading in code from a file and writing out code to a file, as well as importing all the necessary dependencies for compressing code using the gjs/cse, global cse, or library matching. See various test case folders for examples.
+Holds procedures for reading in code from a file and writing out code to a file, as well as importing all the necessary dependencies for compressing code using the gjs/cse, global cse, or library matching. See the tests directory for examples.
 
 ### Additional Replacement
 
