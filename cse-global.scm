@@ -152,7 +152,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
 
 
 ;;; TODO extension: infer the parameters?
-
+#|
 (load "sdf/unification/type-resolver")
 (load "sdf/unification/unify")
 
@@ -174,6 +174,7 @@ Authors: Gabrielle Ecanow, Marlena Gomez, Katherine Liew
    ((t (type:procedure ((? x:8) (numeric-type)) (? type:10)) modulo)
     (t (? x:8) x)
     (t (numeric-type) 3)))
+|#
 |#
 
 

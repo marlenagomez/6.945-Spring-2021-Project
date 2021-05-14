@@ -81,11 +81,11 @@
 
 ((run-locally library 'add-c-map) 4 '(3 2 1)) ; -> (7 6 5)
 
-(browse library)
+(browse library) ; -> (add-c-map mod10 |1+2+3| expr-10)
 
-(lookup library '1+2+3)
-(lookup library 'mod10)
-(lookup library 'add-c-map)
+(lookup library '1+2+3)     ; -> (lambda () (+ 1 2 3))
+(lookup library 'mod10)     ; -> (lambda (x) (modulo x 10)) 
+(lookup library 'add-c-map) ; -> (lambda (x y) (map (lambda (l) (+ l x)) y))
 
 
 
